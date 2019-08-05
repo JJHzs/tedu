@@ -1,0 +1,436 @@
+命令行基础
+
+• Linux命令
+– 用来实现某一类功能的指令或程序
+   绿色：可以执行的程序
+  Linux执行命令需要找到相应的程序文件
+
+– 命令的执行依赖于解释器(默认的解释器程序:/bin/bash)
+
+      用户 ------>解释器 ------> 内核------>硬件
+
+
+
+命令行的一般格式
+• 基本用法
+– 命令字      [选项]...      [参数1]     [参数2]...
+
+
+快速编辑技巧
+• Tab键自动补全
+– 可补齐命令字、选项、参数、文件路径、软件名、服务名
+
+]# if(tab)(tab)
+    
+]# ifco(tab)                      #查看IP地址信息命令
+
+]# cat /et(tab)/red(tab)-r(tab)   #查看文本文件内容
+
+]# hostname
+
+]# ls /et(tab)/sysco(tab)/netw(tab)-(tab)/ifc(tab)-e(tab) 
+
+
+]# ls /etc/sysconfig/network-scripts/ifcfg-eth0 
+
+
+• 快捷键
+– Ctrl + l:清空整个屏幕
+– Ctrl + c：结束当前运行的命令
+– Esc  + . 或 Alt  +  .:粘贴上一个命令的参数
+
+– Ctrl + u:清空至行首
+– Ctrl + w:往回删除一个单词(以空格界定)
+
+[root@A ~]# ls  /etc/redhat-release 
+
+[root@A ~]# ls  -l  Alt +  .
+[root@A ~]# cat    Alt +  .
+[root@A ~]# cat  -n   Alt +  .
+
+####################################################
+mount挂载操作：让目录成为设备的访问点      
+ 
+通过系统的安装光盘获得软件包
+
+Windows系统访问光盘内容
+    光盘------》光驱设备-------》CD驱动器（双击）（访问点）
+
+Linux系统访问光盘内容
+    光盘------》光驱设备（文件形式）-------》目录（访问点 挂载点）
+                   快捷方式（/dev/cdrom------》/dev/sr0）
+
+   青色：快捷方式        
+
+1.图形将光盘文件放入光驱设备
+2.命令行查看Linux光驱设备
+[root@A ~]# ls -l /dev/cdrom
+lrwxrwxrwx. 1 root root 3 2月  28 10:53 /dev/cdrom -> sr0
+[root@A ~]# ls /dev/sr0
+
+3.命令行使用mount命令进行挂载
+[root@A ~]# mkdir /dvd
+[root@A ~]# ls /dvd/ 
+
+– 格式:mount  设备路径   挂载点目录
+
+[root@A ~]# mount  /dev/cdrom   /dvd
+[root@A ~]# ls /dvd/
+[root@A ~]# ls /dvd/P(tab)
+4.卸载设备
+[root@A ~]# umount  /dvd
+[root@A ~]# ls /dvd/
+
+[root@A ~]# mkdir  /myiso
+[root@A ~]# ls /myiso
+[root@A ~]# mount /dev/cdrom  /myiso
+[root@A ~]# ls /myiso
+################################################
+总结：
+       1.Linux光驱设备/dev/cdrom
+       2.Linux访问设备内容需要通过访问点
+       3.Linux访问点就是一个目录
+
+注意事项：
+1.目录本身没有任何挂载
+[root@A ~]# umount /dvd/
+umount: /dvd/：未挂载
+[root@A ~]# 
+
+2.有用户正在访问设备内容，用户在挂载点目录中
+[root@A dvd]# umount /dvd/
+umount: /dvd：目标忙。
+        (有些情况下通过 lsof(8) 或 fuser(1) 可以
+         找到有关使用该设备的进程的有用信息)
+[root@A dvd]# 
+
+3.建议挂载点目录，自己创建，尽量不要直接使用根目录下的目录
+4.Linux允许 一个设备具备多个访问点（挂载点）
+5.Linux不允许 一个目录有多个设备挂载
+[root@A /]# mount /dev/cdrom  /dvd/
+[root@A /]# mkdir /myiso
+[root@A /]# mount /dev/cdrom /myiso
+[root@A /]# mkdir /nsd
+[root@A /]# mount /dev/cdrom  /nsd
+
+####################################################
+查看及切换目录
+• pwd — Print Working Directory
+– 用途:查看当前工作目录
+
+• cd — Change Directory
+– 用途:切换工作目录
+– 格式:cd  [目标文件夹位置]
+
+ /root：管理员root的家目录
+ /home:存放所有普通用户的家目录
+
+   ~：表示用户的家目录
+   ～用户名：表示该用户的家目录
+[root@A ~]# useradd natasha   #创建一个普通用户natasha
+[root@A ~]# ls /home/
+[root@A ~]# cd ~natasha       #切换到natasha用户的家目录
+[root@A natasha]# pwd
+
+[root@A natasha]# cd ~root    #切换到root用户的家目录
+[root@A ~]# pwd
+
+[root@A ~]# useradd tc        #切换到tc用户的家目录
+[root@A ~]# cd ~tc
+[root@A tc]# pwd
+
+  . 表示当前目录
+
+
+######################################################
+
+• ls — List
+– 格式:ls [选项]... [目录或文件名]
+
+• 常用命令选项
+ – -l:以长格式显示（显示详细属性）
+ – -A:包括名称以 . 开头的隐藏文档
+ – -d:显示目录本身(而不是内容)的属性
+ – -h:提供易读的容量单位(K、M)等
+[root@A /]#  ls  /root 
+[root@A /]#  ls  -l /root         #查看/root目录内容详细属性
+[root@A /]#  ls  -l /etc/passwd   
+[root@A /]#  ls  -lh /etc/passwd  #显示详细属性加上易读的单位
+
+[root@A /]#  ls  -ld  /root    #显示目录本身的详细属性
+[root@A /]#  ls  -A   /root    #显示目录所有数据，包括隐藏文档
+
+[root@A /]#  ls  -lh  /       #查看根目录内容详细属性
+[root@A /]#  ls  -ld  /       #查看根目录本身的详细属性
+[root@A /]#  ls --help        #显示ls帮助信息
+
+#####################################################
+
+使用通配符
+• 针对不确定的文档名称,以特殊字符表示     
+ – *:任意多个任意字符
+ – ?:单个字符
+[root@A /]# ls /boot/vm*      #显示/boot目录下vm开头的数据
+[root@A /]# ls /etc/*tab      #显示/etc目录下tab结尾的数据
+
+[root@A /]# ls /etc/*.conf  #显示/etc目录下.conf结尾的数据
+[root@A /]# ls /dev/tty*    #显示/dev目录下tty开头的数据
+
+[root@A /]# ls /dev/tty?
+[root@A /]# ls /dev/tty??
+
+• 针对不确定的文档名称,以特殊字符表示
+– [a-z]:多个字符或连续范围中的一个,若无则忽略
+– {a,min,xy}:多组不同的字符串,全匹配                
+
+[root@A /]# ls /dev/tty[3-8]
+[root@A /]# ls /dev/tty[1-7]
+
+[root@A /]# ls /dev/tty{3,7,11,28}
+[root@A /]# ls /dev/tty{31,S0,S1}
+
+  请显示/dev目录下 tty20到tty30 的设备？
+[root@A /]# ls /dev/tty2[0-9]  /dev/tty30
+
+[root@A /]# ls /dev/tty{2[0-9],30}
+
+[root@A /]# ls /dev/tty{2?,30}
+
+####################################################
+别名的定义：简化复杂的命令
+
+• 查看已设置的别名
+– alias [别名名称]
+
+• 定义新的别名
+– alias 别名名称= '实际执行的命令行'
+
+• 取消已设置的别名
+– unalias [别名名称]
+
+
+[root@A /]# hostname
+A.tedu.cn
+[root@A /]# hn
+bash: hn: 未找到命令...
+[root@A /]# alias  hn='hostname'   #设置别名
+[root@A /]# hn
+A.tedu.cn
+[root@A /]# alias             #查看当前生效的所有别名
+
+[root@A /]# alias  myls='ls -ld'
+[root@A /]# myls  /root/
+
+[root@A /]# unalias  myls     #删除别名myls
+[root@A /]# myls
+bash: myls: 未找到命令...
+[root@A /]# 
+######################################################
+新建文档
+
+• mkdir — Make Directory
+– 格式:mkdir [-p] [/路径/]目录名...
+  -p表示连父目录一起创建
+[root@A /]# mkdir -p  /vod/movie/cartoon
+[root@A /]# ls /
+[root@A /]# ls /vod/
+
+[root@A /]# ls /opt/
+[root@A /]# mkdir /opt/nsd01
+[root@A /]# ls /opt/
+
+[root@A /]# mkdir -p /opt/aa/bb/cc/dd
+[root@A /]# ls /opt/
+[root@A /]# ls /opt/aa
+[root@A /]# ls /opt/aa/bb/
+[root@A /]# ls /opt/aa/bb/cc/
+
+[root@A /]# mkdir /opt/haha  /mnt/xixi
+[root@A /]# ls /opt/
+[root@A /]# ls /mnt/
+
+#####################################################
+rm 删除                                             
+• rm — Remove
+– 格式:rm [选项]... 文件或目录...
+
+• 常用命令选项
+– -r、-f:递归删除(含目录)、强制删除
+
+  -r:递归,目录下所有内容，以及子目录下所有内容
+
+[root@A /]# ls /opt/
+[root@A /]# rm -rf /opt/nsd01
+[root@A /]# ls /opt/
+
+###################################################
+mv 移动/改名
+• mv — Move
+– 格式:mv [选项]... 原文件...     目标路径
+
+[root@A /]# rm -rf /opt/*
+[root@A /]# mkdir /opt/nsd01
+[root@A /]# ls /opt/
+nsd01
+[root@A /]# touch /opt/1.txt
+[root@A /]# ls /opt/
+1.txt  nsd01
+[root@A /]# mv /opt/1.txt  /opt/nsd01
+[root@A /]# ls /opt/
+[root@A /]# ls /opt/nsd01
+
+[root@A /]# touch /opt/2.txt
+[root@A /]# ls /opt/
+[root@A /]# mv /opt/2.txt  /opt/nsd01
+[root@A /]# ls /opt/
+[root@A /]# ls /opt/nsd01
+
+重命名：路径不变的移动
+[root@A /]# ls /opt/
+
+[root@A /]# mv /opt/nsd01    /opt/student
+[root@A /]# ls /opt/
+
+[root@A /]# mv /opt/student  /opt/abc
+[root@A /]# ls /opt/
+
+[root@A /]# mv /opt/student  /opt/test
+[root@A /]# ls /opt/
+#####################################################
+cp 复制
+• cp — Copy
+– 格式:cp [选项]... 原文件...     目标路径
+
+• 常用命令选项
+– -r:递归,复制目录时必须有此选项
+
+[root@A /]# cp /etc/passwd   /opt/
+[root@A /]# cp /etc/redhat-release   /opt/
+[root@A /]# ls /opt/
+
+[root@A /]# cp -r /home/  /opt/
+[root@A /]# ls /opt/
+
+[root@A /]# cp -r /boot/  /opt/
+[root@A /]# ls /opt/
+
+强制覆盖
+   临时取消别名：在运行命令前，加上 \
+[root@A /]# cp -r /boot/ /opt/
+[root@A /]# ls /opt/
+[root@A /]# cp -r /boot/ /opt/
+
+[root@A /]# \cp -r  /boot/ /opt/   #在本次操作，临时取消别名
+[root@A /]# 
+
+复制支持两个以上的参数                            
+   永远把最后一个参数作为目标，其他的所有参数都作为源
+[root@A /]# cp /etc/fstab /etc/hosts /etc/shadow  /opt/
+[root@A /]# ls /opt/
+
+复制与 一个点 的连用
+   . :表示当前目录
+[root@A /]# cd /opt/
+[root@A opt]# pwd
+[root@A opt]# cp -r /mnt/  .    #将/mnt复制到当前目录
+[root@A opt]# ls
+[root@A opt]# cd /etc/sysconfig/network-scripts/
+[root@A network-scripts]# pwd
+[root@A network-scripts]# cp /etc/passwd  .
+[root@A network-scripts]# ls
+
+复制重新命名，目标路径下的名字
+[root@A /]# ls /opt/
+
+[root@A /]# cp /etc/redhat-release  /opt/rr
+[root@A /]# ls /opt/
+
+[root@A /]# cp /etc/redhat-release  /opt/cc
+[root@A /]# ls /opt/
+
+[root@A /]# cp -r /home/  /opt/dir
+[root@A /]# ls /opt/
+
+
+请说出，下列操作中两次复制的不同
+[root@A /]# rm -rf /opt/*
+[root@A /]# cp -r /home/ /opt/nsd
+[root@A /]# cp -r /home/ /opt/nsd
+
+####################################################
+[root@A /]# rm -rf /opt/*
+[root@A /]# ls /opt/
+[root@A /]# cp -r /home/ /opt/nsd    
+[root@A /]# ls /opt/
+nsd
+[root@A /]# cp -r /home/ /opt/nsd
+[root@A /]# ls /opt/
+nsd
+[root@A /]# ls /opt/nsd/
+
+#################################################
+   #复制/home目录，放到/opt/目录下命名成nsd
+   #复制/home目录，放到/opt/nsd目录下
+#################################################
+使用vim创建/修改文件
+• vim文本编辑器
+– 格式:vim [[/目录/]文件名]
+
+   – 若目标文件不存在,则新建空文件并编辑
+   – 若目标文件已存在,则打开此文件并编辑
+ 
+ 三个模式：命令模式    插入模式（编辑模式  输入模式）   末行模式
+
+[root@A /]# vim /opt/xixi.txt
+		
+		命------- i 键 ---------》插入模式（Esc 键回到命令模式）
+		令
+		模
+		式------- : 键 ---------》末行模式（Esc 键回到命令模式）
+
+  末行模式：
+     – 保存并退出 :wq
+     – 放弃修改并退出 :q!
+
+[root@A /]# cat /opt/xixi.txt
+
+###################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

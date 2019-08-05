@@ -1,0 +1,351 @@
+使用教学虚拟机
+
+预装虚拟机说明
+• 每个学员机上有三台预先配置好的虚拟机
+– server —— 作为练习用服务器
+– desktop —— 作为练习用客户机
+– classroom —— 提供网关/DNS/软件素材/DHCP等资源
+
+ 保证classroom优先开机
+
+使用rht-vmctl辅助工具
+• 控制教学用虚拟机
+– 格式:rht-vmctl  控制指令  虚拟机名
+
+真机还原三台虚拟机：优先还原classroot虚拟机
+
+[root@room9pc01 ~]# rht-vmctl  reset  classroom
+
+[root@room9pc01 ~]# rht-vmctl  reset  server
+
+[root@room9pc01 ~]# rht-vmctl  reset  desktop
+
+#####################################################
+server虚拟机与desktop虚拟机， root密码为 redhat
+
+server虚拟机:
+         系统的版本：RHEL7.0
+         第一张网卡eth0的IP地址：172.25.0.11/24
+         查看主机名：server0.example.com
+
+desktop虚拟机:
+         系统的版本：RHEL7.0      命令：cat  /etc/redhat-release
+         第一张网卡eth0的IP地址：172.25.0.10/24    命令：ifconfig
+         查看主机名：desktop0.example.com   命令：hostname
+
+虚拟机上测试通信：
+  ping 172.25.0.11
+  ping 172.25.0.10
+
+######################################################
+真机远程管理虚拟机
+
+执行命令：  ssh  用户名@对方IP地址
+测试真机是否可以与虚拟机通信
+[root@room9pc01 ~]# ping 172.25.0.11
+[root@room9pc01 ~]# ping 172.25.0.10
+
+[root@room9pc01 ~]# ssh root@172.25.0.11
+Last login: Fri Mar  1 10:24:27 2019 from 172.25.0.250
+[root@server0 ~]# hostname
+[root@server0 ~]# ifconfig
+[root@server0 ~]# exit      #退出远程管理，回到真机
+
+真机：   Ctrl + shift + t = 开启一个新的终端
+       Ctrl + Page Up   
+       Ctrl + Page Down 
+
+   -X(大写) ：在远程管理时，本机运行对方的图形程序
+
+真机重新远程管理
+[root@room9pc01 ~]# ssh -X root@172.25.0.11
+
+[root@server0 ~]# firefox          #打开火狐浏览器
+[root@server0 ~]# firewall-config  #打开防火墙配置图形工具
+
+#####################################################
+dconf:Linux图形桌面服务（忽略提示）
+(process:29888): dconf-WARNING **: failed to commit changes to dconf: 无法连接：拒绝连接
+
+#####################################################
+在真机上设置永久别名
+   永久别名的配置文件：/root/.bashrc (系统级配置文件) 
+
+[root@room9pc01 ~]#  vim  /root/.bashrc
+ # .bashrc
+ alias  gos='ssh  -X  root@172.25.0.11'
+ alias  god='ssh  -X  root@172.25.0.10'
+
+
+ 需要新开一个终端，进行验证
+
+######################################################
+
+零散软件管理
+
+1.从光盘中获得软件包
+2.从classroom虚拟机上进行下载,页面有Web服务器提供
+   将classroom虚拟机搭建成Web服务器，通过页面形式提供光盘所有内容
+利用真机打开浏览器，在地址栏中输入 classroom.example.com
+
+http://classroom.example.com/content/rhel7.0/x86_64/dvd/
+
+命令行下载软件包
+• 使用wget下载工具
+  – wget 软件包的URL网址
+  – wget 软件包的URL网址 -O(大写) /目录路径/新文件名
+
+真机打开火狐浏览器：输入classroom.example.com
+
+到达Packages页面，利用Ctrl + f 搜索当前页面内容中vsftpd
+右击 软件包----》复制链接地址
+[root@server0 ~]# wget http://classroom.example.com/content/rhel7.0/x86_64/dvd/Packages/vsftpd-3.0.2-9.el7.x86_64.rpm     #默认下载到当前路径下
+
+[root@server0 ~]# ls
+    vsftpd-3.0.2-9.el7.x86_64.rpm
+
+[root@server0 ~]# pwd
+
+• RPM Package Manager,RPM包管理器
+– rpm -q 软件名...                            #查询软件当前系统是否安装
+– rpm -ivh 软件名-版本信息.rpm...  #安装该软件包
+– rpm -e 软件名...                            #卸载软件
+
+]# rpm -q vsftpd         #查询当前系统是否安装软件
+
+]# rpm -q firefox
+
+]# rpm -ivh /root/vsftpd-3.0.2-9.el7.x86_64.rpm   #安装软件包
+
+]# rpm -q vsftpd          #查询软件包是否安装成功
+
+]# rpm -ql vsftpd  #查看软件安装的内容
+
+]# rpm -e vsftpd   #卸载软件
+
+]# rpm -q vsftpd   #查询是否卸载成功
+
+###################################################
+了解内容：导入红帽签名信息
+[root@server0 ~]# wget http://classroom.example.com/content/rhel7.0/x86_64/dvd/RPM-GPG-KEY-redhat-release
+
+进行导入
+[root@server0 ~]# rpm --import /root/RPM-GPG-KEY-redhat-release 
+[root@server0 ~]# 
+
+#####################################################
+内核升级：安装一个新版本的内核软件包
+1.下载新的内核软件包
+[root@server0 ~]# wget  http://classroom.example.com/content/rhel7.0/x86_64/errata/Packages/kernel-3.10.0-123.1.2.el7.x86_64.rpm
+
+[root@server0 ~]# ls  
+[root@server0 ~]# uname -r
+
+]# rpm -ivh /root/kernel-3.10.0-123.1.2.el7.x86_64.rpm  
+
+[root@server0 ~]# uname -r
+[root@server0 ~]# reboot 
+Connection to 172.25.0.11 closed by remote host.
+Connection to 172.25.0.11 closed.
+[root@room9pc01 ~]# gos
+[root@server0 ~]# uname -r
+3.10.0-123.1.2.el7.x86_64
+[root@server0 ~]#             
+
+#################################################
+常见错误提示：
+[root@server0 ~]# rpm -ivh /root/bind-chroot-9.9.4-14.el7.x86_64.rpm 
+错误：依赖检测失败：
+	bind = 32:9.9.4-14.el7 被 bind-chroot-32:9.9.4-14.el7.x86_64 需要
+
+
+#####################################################
+Yum软件包管理:自动解决依赖关系
+
+  Yum称为软件包仓库
+
+服务：为客户端自动解决依赖关系安装软件包
+
+服务端：      1.软件包    2.仓库数据文件   
+                       都在光盘内容中
+                  3.利用HTTP：超文本传输协议，传递软件包到客户端
+
+            FTP：文本传输协议
+            HTTP：超文本传输协议
+
+    虚拟机classroom，已经实现web服务器构建，并且共享了光盘所有内容
+
+客户端：虚拟机server，书写一个配置文件指定Yum服务端位置
+
+    客户端文件路径：/etc/yum.repos.d/*.repo
+    在此路径下，错误的配置文件会影响正确的配置文件
+
+[root@server0 ~]# rm -rf /etc/yum.repos.d/*
+[root@server0 ~]# ls /etc/yum.repos.d/
+[root@server0 ~]# vim /etc/yum.repos.d/dvd.repo
+ [rhel7]              #仓库名称
+ name=haha  xixi      #仓库描述信息
+ baseurl=http://classroom.example.com/content/rhel7.0/ x86_64/dvd/           #指定Yum服务端位置
+ enabled=1            #本文件是否生效
+ gpgcheck=0           #是否检测软件包红帽签名信息
+
+[root@server0 ~]# yum repolist  #列出仓库信息
+
+Yum的使用
+1.安装软件
+[root@server0 ~]# yum -y install httpd
+[root@server0 ~]# rpm -q httpd
+[root@server0 ~]# yum -y install gcc
+[root@server0 ~]# rpm -q gcc
+[root@server0 ~]# yum -y install bind-chroot
+[root@server0 ~]# rpm -q bind-chroot
+[root@server0 ~]# yum -y install sssd
+[root@server0 ~]# rpm -q sssd
+[root@server0 ~]# yum -y install system-config-kickstart 
+[root@server0 ~]# rpm -q system-config-kickstart
+
+2.卸载软件包,不建议加 -y 选项
+[root@server0 ~]# yum remove  软件名
+
+3.清空Yum的缓存
+[root@server0 ~]# yum repolist    #列出仓库信息
+
+[root@server0 ~]# yum clean all   #清空Yum的缓存
+
+[root@server0 ~]# yum repolist    #列出仓库信息
+
+####################################################
+配置网络
+
+一、修改/etc/hostname配置文件，永久配置主机名
+[root@server0 ~]# vim  /etc/hostname
+A.tedu.cn
+[root@server0 ~]# hostname
+A.tedu.cn
+[root@server0 ~]# exit
+登出
+
+[root@room9pc01 ~]# gos
+[root@A ~]# 
+
+二、永久配置  IP地址/子网掩码/网关地址
+
+1.修改网卡配置文件：/etc/sysconfig/network-scripts/ifcfg-eth0
+
+2.利用命令方式实现永久配置
+
+   1)利用命令nmcli查看识别的网卡名字
+[root@A ~]# nmcli connection show 
+名称       
+System eth0  
+[root@A ~]# 
+  
+   2)开始利用nmcli命令进行配置      
+]# nmcli  connection   modify   'System eth0'     
+   ipv4.method   manual                                   
+   ipv4.addresses  '192.168.1.1/24  192.168.1.254'         
+   connection.autoconnect    yes
+
+    nmcli connection   修改     '网卡名字'
+    ipv4.配置方法    手工配置
+    ipv4.地址    'IP地址/子网掩码      网关地址'
+       每次开机自动启用配置
+
+]# cat /etc/sysconfig/network-scripts/ifcfg-eth0 
+
+    3）激活配置
+]# nmcli  connection   up  'System eth0
+
+
+  真机虚拟化网络的设置，必须要求虚拟机Server与虚拟机Desktop在172.25.0.0/24网络中才可以ping通
+
+
+查看主机网关地址命令：route -n
+  
+    Gateway
+       192.168.1.254
+
+###################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

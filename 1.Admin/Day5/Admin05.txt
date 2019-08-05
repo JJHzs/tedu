@@ -1,0 +1,448 @@
+使用教学虚拟机
+
+ 保证classroom优先开机
+
+使用rht-vmctl辅助工具
+• 控制教学用虚拟机
+– 格式:rht-vmctl  控制指令  虚拟机名
+
+真机还原三台虚拟机：优先还原classroot虚拟机
+
+[root@room9pc01 ~]# rht-vmctl  reset  classroom
+
+[root@room9pc01 ~]# rht-vmctl  reset  server
+
+[root@room9pc01 ~]# rht-vmctl  reset  desktop
+
+#####################################################
+为虚拟机server配置，永久配置DNS服务器地址             
+     DNS服务器作用：将域名解析为IP地址
+         指定DNS服务器配置文件：/etc/resolv.conf
+[root@server0 ~]# vim /etc/resolv.conf 
+nameserver  172.25.254.254
+
+[root@server0 ~]# cat  /etc/resolv.conf 
+
+测试DNS是否能解析域名
+[root@server0 ~]# nslookup server0.example.com
+
+[root@server0 ~]# nslookup desktop0.example.com
+
+###################################################
+查看日期时间
+[root@server0 ~]# date
+
+[root@server0 ~]# date -s '年-月-日    时：分：秒'     #修改时间
+
+[root@server0 ~]# date -s '2008-10-1 12:10:01'
+
+[root@server0 ~]# date +%Y  #单独显示年份
+
+[root@server0 ~]# date -s '2019-03-02 10:08:01'  #修改正确时间
+
+计算器bc
+       + 加   - 减   * 乘    / 除
+
+重定向输出:将前面命令的输出结果，写入到文本文件
+       >:覆盖重定向
+       >>:追加重定向
+[root@server0 /]# ls --help
+[root@server0 /]# ls --help  > /opt/ls.txt
+[root@server0 /]# less /opt/ls.txt
+
+[root@server0 /]# hostname
+[root@server0 /]# hostname  > /opt/ls.txt 
+[root@server0 /]# cat /opt/ls.txt
+[root@server0 /]# hostname  >> /opt/ls.txt
+[root@server0 /]# cat /opt/ls.txt
+
+[root@server0 /]# head -3 /etc/passwd  
+[root@server0 /]# head -3 /etc/passwd  > /opt/ls.txt
+[root@server0 /]# cat /opt/ls.txt
+
+[root@A ~]# echo 123456
+[root@A ~]# echo 123456 > /opt/ls.txt
+[root@A ~]# cat /opt/ls.txt
+
+[root@A ~]# echo  'nameserver  172.25.254.254' > /etc/resolv.conf 
+[root@A ~]# cat /etc/resolv.conf
+
+[root@A ~]# echo  A.tedu.cn > /etc/hostname
+[root@A ~]# cat /etc/hostname
+
+  |  管道操作：将前面命令的输出结果，传递给后面命令当作后面命令的参数
+
+
+  请显示/etc/passwd的8-12行内容                            
+[root@A ~]# head -12 /etc/passwd  |  tail -5 
+
+[root@A ~]# head -12 /etc/passwd  |   tail -5  | cat -n
+
+[root@A ~]# cat -n /etc/passwd | head -12 | tail -5
+
+[root@A ~]# head -9 /etc/passwd | tail -1
+[root@A ~]# cat -n /etc/passwd  | head -9  | tail -1
+
+[root@A ~]# ifconfig | less
+[root@A ~]# ifconfig | head -2
+
+[root@A ~]# echo 3+4 | bc
+[root@A ~]# echo 3*4 | bc
+
+#####################################################
+管理用户和组
+
+   系统用户： 1.登陆操作系统  2.方便做权限的不同设置
+    组：方便管理众多的用户，方便对用户进行分类
+   
+   唯一标识： UID   GID  
+ 
+   管理员root的UID为0
+
+   组的分类： 基本组     附加组（从属组）
+   基本组：Linux自己创建的组，与用户同名，系统自动将用户加入
+   附加组（从属组）：管理员自建创建，管理员将用户加入
+
+  Linux一个用户必须至少属于一个组
+
+
+添加用户
+用户基本信息存放在 /etc/passwd 文件
+ [root@A ~]# head -1 /etc/passwd
+ root:x:0:0:root:/root:/bin/bash
+用户名：密码占位符：用户UID：基本的GID：描述信息：家目录：解释器
+
+• 使用 useradd 命令
+– useradd [选项]... 用户名
+
+• 常用命令选项
+– -u 用户id、-d 家目录路径、-s 登录解释器、-G 附加组
+[root@A ~]# useradd nsd01
+[root@A ~]# id nsd01
+[root@A ~]# grep nsd01 /etc/passwd
+
+[root@A ~]# useradd nsd02
+[root@A ~]# useradd -u 1500 nsd03    #指定用户UID创建
+[root@A ~]# grep nsd /etc/passwd
+
+[root@A ~]# useradd -d /mnt/nsd06  nsd06
+[root@A ~]# grep nsd06 /etc/passwd
+[root@A ~]# ls /mnt/
+
+[root@A ~]# useradd  -d  /opt/nsd07  nsd07
+[root@A ~]# grep  nsd07  /etc/passwd
+[root@A ~]# ls /opt
+
+[root@A ~]# useradd  -d  /opt/nsd08    nsd08
+[root@A ~]# grep  nsd08  /etc/passwd
+[root@A ~]# ls /opt
+
+[root@A ~]# useradd  -u  1600  -d  /mnt/haha  nsd09
+[root@A ~]# id  nsd09
+[root@A ~]# grep  nsd09  /etc/passwd
+[root@A ~]# ls  /mnt/
+
+  -s 登录解释器
+
+  /sbin/nologin:禁止用户登陆系统
+
+[root@A ~]# useradd -s /sbin/nologin nsd10
+[root@A ~]# grep nsd10 /etc/passwd
+
+  -G 附加组
+[root@A ~]# groupadd tarena
+[root@A ~]# useradd -G tarena nsd11
+[root@A ~]# id nsd11
+
+[root@A ~]# useradd -G tarena nsd12
+[root@A ~]# id nsd12
+
+######################################################
+
+设置登录密码
+用户密码信息存放在 /etc/shadow 文件
+[root@A ~]# head -1 /etc/shadow
+root:$6$UiGI4Tc2$htsXYn5cJnOqv3P1VLcUSgfjDu2pL5yiJBuua6foZAHdwqeuLHfYUfS/vBn27Wjvoel8EJgtdsMjyquqvKAmf1:16261:0:99999:7:::
+
+ 用户名:密码加密之后的字符串:上一次修改密码的时间
+
+
+
+• 使用 passwd 命令
+– passwd [用户名]
+
+[root@A ~]# passwd nsd01
+更改用户 nsd01 的密码 。
+新的 密码：                         #设置新的密码
+无效的密码： 密码是一个回文
+重新输入新的 密码：             #重新输入密码
+passwd：所有的身份验证令牌已经成功更新。
+[root@A ~]# su  -  nsd01      #命令行临时切换用户身份
+[nsd01@A ~]$ passwd 
+Changing password for user nsd01.
+Changing password for nsd01.
+(current) UNIX password:       #输入旧密码
+New password:                  #设置新的密码
+Retype new password:           #重新输入密码
+passwd: all authentication tokens updated successfully.
+[nsd01@A ~]$ exit
+
+successfully:成功
+
+
+ 非交互式设置密码
+– echo '密码'   |   passwd --stdin 用户名
+
+[root@A ~]# echo 123  |  passwd --stdin nsd01
+
+[root@A ~]# echo redhat |  passwd --stdin nsd01
+
+#####################################################
+
+ 修改用户属性
+• 使用 usermod 命令
+– usermod [选项]... 用户名
+
+• 常用命令选项
+– -u 用户id、-d 家目录路径、-s 登录Shell、-G 附加组  
+
+[root@A ~]# useradd nsd12
+[root@A ~]# grep nsd12 /etc/passwd
+[root@A ~]# id nsd12
+
+[root@A ~]# usermod -u 1700 -d /mnt/nsd12   -G tarena  -s /sbin/nologin  nsd12
+ 
+[root@A ~]# grep nsd12 /etc/passwd
+[root@A ~]# id nsd12
+####################################################
+删除用户
+• 使用 userdel 命令
+– userdel [-r] 用户名
+         -r:连用用户家目录一并删除
+
+[root@A ~]# userdel -r nsd01
+[root@A ~]# id nsd01
+id: nsd01: no such user
+[root@A ~]# ls /home/nsd01
+ls: 无法访问/home/nsd01: 没有那个文件或目录
+[root@A ~]# userdel nsd02
+[root@A ~]# id nsd02
+id: nsd02: no such user
+[root@A ~]# ls /home/
+
+##################################################
+管理组账号
+
+
+添加组
+组基本信息存放在 /etc/group 文件
+[root@A ~]# grep adminuser /etc/group
+ adminuser:x:1902:
+  组名字 :密码占位符:组GID:组成员列表
+
+• 使用 groupadd 命令
+– groupadd [-g 组ID] 组名
+
+[root@A ~]# groupadd  adminuser
+[root@A ~]# grep adminuser /etc/group
+adminuser:x:1902:
+[root@A ~]# useradd  natasha
+[root@A ~]# useradd  harry
+[root@A ~]# useradd  kenji
+[root@A ~]# useradd  jack
+
+管理组成员
+组成员信息存放在 /etc/gshadow 文件
+• 使用 gpasswd 命令
+– gpasswd -a 用户名   组名
+– gpasswd -d 用户名   组名
+
+[root@A ~]# gpasswd -a natasha adminuser   
+[root@A ~]# grep adminuser /etc/group
+
+[root@A ~]# gpasswd -d natasha adminuser
+[root@A ~]# grep adminuser /etc/group
+
+[root@A ~]# gpasswd -a jack adminuser
+[root@A ~]# grep adminuser /etc/group
+
+[root@A ~]# gpasswd -a harry adminuser
+[root@A ~]# grep adminuser /etc/group
+
+[root@A ~]# gpasswd -d jack adminuser
+[root@A ~]# grep adminuser /etc/group
+
+修改组属性
+• 使用 groupmod 命令
+– groupmod [-g 组ID] [-n 新组名] 组名
+
+
+删除组
+• 使用 groupdel 命令
+– groupdel 组名
+
+#######################################################
+tar备份与恢复
+
+     可以将分散的数据，整合到一起
+     可以减小占用磁盘空间
+
+归档和压缩
+• 归档的含义
+– 将许多零散的文件整理为一个文件
+– 文件总的大小基本不变
+
+• 压缩的含义
+– 按某种算法减小文件所占用空间的大小
+– 恢复时按对应的逆向算法解压
+
+Linux常见的压缩格式：
+      gzip ------》.gz 
+      bzip2  ------》.bz2  
+      xz  ------》.xz 
+
+• tar 集成备份工具
+– -c:创建归档
+– -x:释放归档
+– -f:指定归档文件名称
+– -z、-j、-J:调用 .gz、.bz2、.xz 格式的工具进行处理
+– -t:显示归档中的文件清单
+– -C(大写):指定释放的位置
+   f:选项必须放在所有选项的最后
+    
+制作tar包
+   命令格式：
+    tar  选项      压缩包名字     被压缩归档的源数据 ......
+
+]# tar -zcf  /opt/abc.tar.gz   /etc/passwd  /home/  /root/
+]# ls /opt/
+
+]# tar -jcf /opt/nsd.tar.bz2  /etc/passwd  /home/  /root/ 
+]# ls /opt/
+
+]# tar -Jcf /opt/file.tar.xz  /etc/passwd  /home/  /root/
+]# ls /opt/
+
+   -z对应gzip压缩格式    扩展名为.gz结尾            
+   -j对应bzip2压缩格式    扩展名为.bz2结尾
+   -J对应xz压缩格式   扩展名为.xz结尾
+
+###################################################
+解tar包
+   命令格式：
+    tar  选项      压缩包名字      释放的位置
+
+[root@A ~]# tar -xf /opt/abc.tar.gz  -C(大写)  /mnt/
+[root@A ~]# ls /mnt/
+
+[root@A ~]# ls /mnt/etc/
+
+[root@A ~]# ls /mnt/home/
+
+[root@A ~]# ls /mnt/root/
+
+###################################################
+案例2:创建一个备份包
+使用 tar 工具完成以下备份任务:
+– 创建一个名为 /root/backup.tar.bz2 的归档文件
+– 其中包含 /usr/local 目录中的内容
+– tar 归档必须使用 bzip2 进行压缩
+[root@A ~]# tar -jcf /root/backup.tar.bz2     /usr/local/
+
+[root@A ~]# ls /root/
+
+[root@A ~]# tar -tf /root/backup.tar.bz2   #显示tar包内容
+
+####################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

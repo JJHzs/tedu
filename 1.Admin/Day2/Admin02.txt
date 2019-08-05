@@ -1,0 +1,372 @@
+Linux是一种操作系统!!
+
+操作系统：一堆软件的集合，可以让计算机硬件正常工作
+
+Unix/Linux发展史                                     
+
+• UNIX诞生,1970-1-1
+• Linux之父,Linus Torwalds
+    – 标准读音:“哩呐科斯”
+    内核：负责调配所有计算机物理硬件
+    用户---------》内核---------》硬件
+     – 版本号:主版本.次版本.修订号
+
+• 发行版的名称/版本由发行方决定
+ – Red Hat Enterprise Linux 5/6/7
+ – Suse Linux Enterprise 12
+ – Debian Linux 7.8
+ – Ubuntu Linux 14.10/15.04
+
+######################################################
+利用虚拟机软件，安装RHEL7系统
+
+  Ctrl + Alt = 鼠标回到真机
+
+######################################################
+
+
+• 一块硬盘的“艺术”之旅
+– 物理硬盘==>分区规划==>格式化==>读/写文档
+– 毛坯楼层==>打隔断==>装修==>入驻
+
+ 格式化：赋予空间文件系统的过程
+ 文件系统：存储数据的规则
+
+ 常见文件系统：
+     Windows： NTFS   FAT  
+     Linux ：  ext4 第四代扩展文件系统（RHEL6）  
+               xfs 高级日志文件系统（RHEL7）
+               swap（交换文件系统  相当于虚拟内存）
+                          作用：缓解物理内存不足
+
+#####################################################
+Linux目录结构：树型结构
+   / 根目录：所有数据都存放在此目录下（Linux系统的起点）
+
+  /dev：存放设备相关的数据（硬盘  键盘  鼠标  光驱 .......）
+
+ 表示文件数据位置：/dev/abc/1.txt
+
+磁盘与分区表示
+• 名称规则
+
+  hd,表示IDE设备
+  sd,表示SCSI设备 
+  vd,表示虚拟设备 （虚拟机中可以见到）
+
+  /dev/hda  /dev/hdb    /dev/hdc    /dev/hdd
+  /dev/sda  /dev/sdb    /dev/sdc    /dev/sdd
+
+  /dev/sda1=表示SCSI设备,第一块，第一个分区
+  /dev/sdc3=表示SCSI设备,第三块，第三个分区
+
+##################################################
+获取命令行界面
+• 虚拟控制台切换( Ctrl + Alt + Fn 组合键)
+ – tty1:图形桌面
+ – tty2~tty6:字符控制台
+
+图形界面，获取命令行
+
+  ctrl  shift  + = 放大
+  ctrl  -  = 缩小
+
+#################################################
+
+• 命令行提示标识的含义
+– [当前用户@主机名 当前所在位置]$
+
+– 若当前用户是root,则最后一个字符为 #
+[root@svr7 桌面]#
+– 否则,最后一个字符为 $
+[teacher@svr7 桌面]$
+
+#####################################################
+查看及切换目录
+• pwd — Print Working Directory
+– 用途:查看当前工作目录,显示当前所在的位置
+
+• cd — Change Directory
+– 用途:切换工作目录
+– 格式:cd [目标文件夹位置]
+
+• ls — List
+– 格式:ls [选项]... [目录或文件名]...
+
+  蓝色：目录
+  黑色：文本文件
+[root@localhost ~]# cd  /     #切换到根目录下
+[root@localhost /]# pwd       #查看当前位置
+[root@localhost /]# ls        #显示当前目录下内容
+
+[root@localhost /]# cd  /dev
+[root@localhost dev]# pwd
+[root@localhost dev]# ls
+
+[root@localhost /]# cd  /boot
+[root@localhost boot]# pwd
+[root@localhost boot]# ls
+
+[root@localhost /]# cd  /opt
+[root@localhost opt]# pwd
+[root@localhost opt]# ls
+
+[root@localhost /]# ls /opt/
+[root@localhost /]# ls /root
+[root@localhost /]# ls /boot/
+
+ 清屏：ctrl + l
+
+#######################################################
+查看文本文件内容：cat
+
+[root@localhost /]# cat /root/anaconda-ks.cfg
+[root@localhost /]# ls /etc/passwd
+[root@localhost /]# ls /etc/fstab
+[root@localhost /]# ls /etc/hosts
+[root@localhost /]# cat  /etc/passwd
+[root@localhost /]# cat  /etc/fstab
+[root@localhost /]# cat  /etc/hosts
+
+查看当前系统版本
+[root@localhost /]# ls /etc/redhat-release
+[root@localhost /]# cat  /etc/redhat-release
+
+################################################
+
+• 命令行的一般格式
+– 命令字     [选项]...       [参数1]     [参数2]...
+   cat              /etc/passwd
+
+     打                            lisi
+
+[root@localhost /]# cat -n  /etc/hosts
+[root@localhost /]# cat -n  /etc/passwd
+[root@localhost /]# cat -n  /etc/redhat-release
+[root@localhost /]# cat  --help
+
+• 列出内核版本
+[root@localhost /]# uname
+[root@localhost /]# uname -r
+
+
+• ls — List
+– 格式:ls [选项]... [目录或文件名]...
+
+• 常用命令选项
+– -l :以长格式显示(显示详细信息)
+
+[root@localhost /]# ls -l /etc/passwd
+[root@localhost /]# ls -l /etc/shadow
+[root@localhost /]# ls -l /etc/hosts
+[root@localhost /]# ls -l /etc/fstab
+
+[root@localhost /]# ls -l /root   #显示/root目录内容详细信息
+[root@localhost /]# ls -l /boot
+[root@localhost /]# ls -l /       #显示根目录内容详细信
+
+• 真机查看列出CPU处理器信息            
+[root@room9pc01 ~]# lscpu
+........
+CPU(s):                4
+........
+型号名称：        Intel(R) Core(TM) i5-4430S CPU @ 2.70GHz
+........
+
+• 真机查看检查内存大小、空闲情况
+[root@room9pc01 ~]# cat /proc/meminfo 
+MemTotal:       16166612 kB
+
+#######################################################
+
+
+查看主机名和IP信息
+• 列出当前系统的主机名称
+[root@localhost /]# hostname
+localhost.localdomain
+[root@localhost /]# hostname  A.tedu.cn   #设置新的主机名
+[root@localhost /]# hostname  
+[root@localhost /]# exit
+
+开启一个新的终端，查看主机名变化
+
+
+• 列出已激活的网卡连接信息
+[root@A ~]#  ifconfig
+
+ eth0：第一张网卡
+
+ lo: 回环接口   127.0.0.1 永远代表自己
+
+[root@A ~]# ifconfig  eth0 192.168.1.1  #临时设置IP地址
+[root@A ~]# ifconfig 
+
+[root@A ~]# ping 192.168.1.1
+
+ Ctrl + c = 停止正在运行的命令
+
+#####################################################
+• 关机:poweroff
+[root@svr7 ~]# poweroff
+• 重启:reboot
+[root@svr7 ~]# reboot
+
+创建文档
+• mkdir — Make Directory
+– 格式:mkdir  [/路径/]目录名...
+[root@A ~]# mkdir abc         #当前创建目录
+[root@A ~]# ls
+[root@A ~]# pwd
+[root@A ~]# mkdir /opt/test
+[root@A ~]# ls /opt/
+
+[root@A ~]# mkdir /opt/nsd01   /mnt/nsd02   #同时创建两个目录
+[root@A ~]# ls /opt
+[root@A ~]# ls /mnt
+
+• touch命令
+– 用途:新建空文件
+– 格式:touch 文件名...
+[root@A ~]# touch 1.txt
+[root@A ~]# ls
+
+[root@A ~]# touch /opt/2.txt
+[root@A ~]# ls /opt/
+
+[root@A ~]# cat /opt/2.txt
+
+[root@A ~]# touch /mnt/3.txt   /boot/4.txt
+[root@A ~]# ls /mnt
+[root@A ~]# ls /boot
+
+• less分屏阅读工具
+• 格式:less [选项] 文件名...
+– 优势:适合查看大文件内容
+• 基本交互操作
+– 按 / 键向后查找(n、N切换)
+– 按 q 键退出
+
+[root@A ~]# less /etc/passwd
+– 按 上 下 键进行滚动
+– 按 / 键向后查找(n、N切换)
+– 按 q 键退出
+
+• head、tail 命令                              
+– 格式:
+  head -n 数字 文件名
+  tail -n 数字 文件名
+
+[root@A ~]# head -3 /etc/passwd    #显示文件内容头3行
+[root@A ~]# head -12 /etc/passwd   #显示文件内容头12行
+[root@A ~]# head   /etc/passwd     #默认显示文件内容头10行
+
+[root@A ~]# tail -1 /etc/passwd            #显示文件最后一行
+lisi:x:1000:1000:lisi:/home/lisi:/bin/bash
+[root@A ~]# tail -3 /etc/passwd          #显示文件内容后三行
+[root@A ~]# tail  /etc/passwd     #默认显示文件内容尾10行
+
+
+文本内容操作(续2)
+• grep工具
+– 用途:输出包含指定字符串的行
+– 格式:grep   '查找条件'   目标文件
+    
+[root@A ~]# grep root  /etc/passwd  #文件内容中，查找包含root
+
+[root@A ~]# grep haha  /etc/passwd
+
+[root@A ~]# grep lisi  /etc/passwd
+
+[root@A ~]# grep bash  /etc/passwd     
+
+[root@A ~]# grep bin  /etc/passwd  
+
+#######################################################
+绝对路径与相对路径
+
+绝对路径：以根目录起始的路径
+相对路径：以当前路径为参照的路径
+[root@A ~]# cd /etc/pki/
+[root@A pki]# pwd
+[root@A pki]# ls
+[root@A pki]# cd /etc/pki/CA   #绝对路径
+[root@A CA]# pwd
+
+[root@A CA]# cd  /etc/pki/
+[root@A pki]# pwd
+[root@A pki]# ls
+[root@A pki]# cd CA         #相对路径
+[root@A CA]# pwd
+[root@A CA]# 
+
+  cd   ..  = 返回上一级目录
+[root@A /]# cd /etc/pki/
+[root@A pki]# pwd
+
+[root@A pki]# cd  ..
+[root@A etc]# pwd
+
+[root@A etc]# cd  ..
+[root@A /]# pwd
+
+[root@A /]# cd  ..
+[root@A /]# pwd
+
+[root@A /]# cd /etc/pki/
+[root@A pki]# cd ../..       #连续返回两次
+[root@A /]# pwd
+
+####################################################
+vim修改文本内容（交互式文本编辑器）
+          sed（非交互式文本编辑器）
+
+ 三个模式：命令模式     插入模式（输入模式  编辑模式）    末行模式
+
+            命-----------按键盘  i键---------》插入模式（Esc回到命令模式）
+            令
+            模
+            式-----------按键盘 ：键---------》末行模式（Esc回到命令模式）
+
+[root@A /]# vim  /opt/haxi.txt     #文件不存在，会自动创建
+
+     末行模式   ：wq  保存并退出
+            ：q！ 强制不保存并退出
+
+[root@A /]# cat  /opt/haxi.txt      
+
+###################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

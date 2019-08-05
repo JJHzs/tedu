@@ -1,0 +1,397 @@
+使用教学虚拟机
+
+ 保证classroom优先开机
+
+使用rht-vmctl辅助工具
+• 控制教学用虚拟机
+– 格式:rht-vmctl  控制指令  虚拟机名
+
+真机还原三台虚拟机：优先还原classroot虚拟机
+
+[root@room9pc01 ~]# rht-vmctl  reset  classroom
+
+[root@room9pc01 ~]# rht-vmctl  reset  server
+
+[root@room9pc01 ~]# rht-vmctl  reset  desktop
+
+
+#####################################################
+基本权限的类别
+• 访问方式(权限)
+– 读取:允许查看内容-read   r  
+– 写入:允许修改内容-write    w
+– 可执行:允许运行和切换-execute  x
+
+ 对于文本文件：
+     r 读取权限：cat  less  head tail 
+     w 写入权限：vim    >   >>
+     x 可执行权限: Shell脚本编写时可以赋予
+
+• 权限适用对象(归属)
+– 所有者:拥有此文件/目录的用户-user  u
+– 所属组:拥有此文件/目录的组-group    g
+– 其他用户:除所有者、所属组以外的用户-other  o
+
+
+查看权限
+• 使用 ls  -l  命令
+– ls  -ld   文件或目录...                   
+
+     以 - 开头：文本文件
+     以 d 开头：目录
+     以 l 开头：快捷方式
+
+[root@server0 ~]# ls -l  /etc/passwd
+[root@server0 ~]# ls -ld /etc/
+[root@server0 ~]# ls -l  /etc/shadow
+[root@server0 ~]# ls -ld /home
+[root@server0 ~]# ls -ld /home/student
+[root@server0 ~]# ls -ld /tmp
+[root@server0 ~]# ls -l  /bin/bash
+
+#######################################################
+设置基本权限
+• 使用 chmod 命令
+– chmod [-R] 归属关系+-=权限类别 文档...
+         -R:递归修改
+[root@server0 ~]# mkdir /nsd01
+[root@server0 ~]# ls -ld /nsd01
+[root@server0 ~]# chmod g+w /nsd01
+[root@server0 ~]# ls -ld /nsd01
+
+[root@server0 ~]# chmod g-w /nsd01
+[root@server0 ~]# ls -ld /nsd01
+
+[root@server0 ~]# chmod o+w /nsd01
+[root@server0 ~]# ls -ld /nsd01
+
+[root@server0 ~]# chmod u=rwx,g=rx,o=rx /nsd01
+[root@server0 ~]# ls -ld /nsd01
+
+[root@server0 ~]# chmod ugo=rwx /nsd01
+[root@server0 ~]# ls -ld /nsd01
+
+
+#################################################
+Linux如何判断一个用户具备权限：   匹配及停止
+    1.首先查看用户角色                   所有者>所属组>其他人
+    2.查看相应角色的权限划分
+
+
+Permission denied :权限不足
+
+
+
+
+
+目录的 r 权限:能够 ls 浏览此目录内容
+目录的 w 权限:能够执行 rm/mv/cp/mkdir/touch/等更改目录内容的操作
+目录的 x 权限:能够 cd 切换到此目录
+
+以root用户新建/nsddir/目录，在此目录下新建readme.txt文件
+并进一步完成下列操作
+ 1）使用户lisi能够在此目录下创建子目录    切换用户  su  -  lisi
+     chmod o+w  /nsddir/
+ 2）使用户lisi不能够在此目录下创建子目录
+     chmod o-w  /nsddir/
+ 3）使用户lisi能够修改readme.txt文件内容
+     chmod o+w  /nsddir/readme.txt
+ 4）调整此目录的权限，使所有用户都不能cd进入此目录
+     chmod u-x,g-x,o-x  /nsddir/
+ 5）为此目录及其下所有文档设置权限 rwxr-x---
+     chmod -R  u=rwx,g=rx,o=---  /nsddir/
+
+####################################################            
+设置文档归属
+• 使用 chown 命令
+– chown  [-R]  属主      文档...
+– chown  [-R]  :属组      文档...
+– chown  [-R]  属主:属组  文档...
+
+[root@server0 /]# mkdir /nsd04
+[root@server0 /]# ls -ld /nsd04
+drwxr-xr-x. 2 root root 6 3月   4 11:22 /nsd04
+[root@server0 /]# useradd tom      #创建用户tom
+[root@server0 /]# groupadd stugrp  #创建组stugrp
+[root@server0 /]# chown tom:stugrp /nsd04
+[root@server0 /]# ls -ld /nsd04
+
+[root@server0 /]# chown lisi /nsd04   #仅修改所有者
+[root@server0 /]# ls -ld /nsd04
+
+[root@server0 /]# chown :root /nsd04   #仅修改所属组
+[root@server0 /]# ls -ld /nsd04
+
+######################################################
+利用root用户新建/nsd06目录，并进一步完成下列操作
+1）将属主设为gelin01，属组设为tarena组              
+[root@server0 /]# useradd gelin01
+[root@server0 /]# useradd gelin02
+[root@server0 /]# groupadd tarena
+[root@server0 /]# chown gelin01:tarena  /nsd06
+2）使用户gelin01对此目录具有rwx权限
+      除属主与属组之外的人，对此目录无任何权限
+[root@server0 /]# chmod o=--- /nsd06
+3）使用户gelin02能进入、查看此目录
+[root@server0 /]# gpasswd -a  gelin02  tarena
+4）将gelin01加入tarena组, 将nsd06目录的权限设为rw-r-x---
+      再测试gelin01用户能否进入此目录
+[root@server0 /]# gpasswd -a  gelin01  tarena
+[root@server0 /]# chmod u=rw,g=rx /nsd06
+
+###############################################
+实现lisi读取/etc/shadow文件内容，您有几种办法？
+[root@server0 /]# ls -l /etc/shadow
+----------. 1 root root 1201 3月   4 11:22 /etc/shadow
+
+1.修改其他人权限
+  [root@server0 /]# chmod o+r /etc/shadow 
+2.修改所有者，赋予权限
+  [root@server0 /]# chown lisi /etc/shadow
+  [root@server0 /]# chmod u+r /etc/shadow
+3.修改所属组，赋予权限
+  [root@server0 /]# chown :lisi /etc/shadow
+  [root@server0 /]# chmod g+r /etc/shadow
+4.为lisi单独设置ACL策略
+  [root@server0 /]# setfacl -m u:lisi:r /etc/shadow
+
+
+####################################################
+附加权限(特殊权限)
+
+Set GID
+• 附加在属组的 x 位上
+– 属组的权限标识会变为 s
+– 适用于目录,Set GID可以使目录下新增的文档自动设
+置与父目录相同的属组
+– 传递所属组身份
+
+[root@server0 /]# mkdir /nsd08
+[root@server0 /]# chown :stugrp /nsd08
+[root@server0 /]# ls -ld /nsd08
+
+[root@server0 /]# mkdir /nsd08/test01
+[root@server0 /]# ls -ld /nsd08/test01
+
+[root@server0 /]# chmod g+s /nsd08/
+[root@server0 /]# ls -ld /nsd08/
+
+[root@server0 /]# mkdir /nsd08/test02
+[root@server0 /]# ls -l /nsd08
+
+[root@server0 /]# touch /nsd08/1.txt
+[root@server0 /]# ls -l /nsd08
+
+
+      /nsd09   每天打卡记录文件    
+      2019-03-04.txt
+      2019-03-05.txt
+      2019-03-06.txt
+      2019-03-07.txt
+
+      groupadd   caiwu   将财务部门所有的人加入该组
+      chown :caiwu  /nsd09
+      chmod g+s  /nsd09   
+
+######################################################
+acl访问控制列表（acl策略）              
+
+acl策略的作用
+• 文档归属的局限性
+– 任何人只属于三种角色:属主、属组、其他人
+– 无法实现更精细的控制
+
+• acl访问策略
+– 能够对个别用户、个别组设置独立的权限
+– 大多数挂载的EXT3/4、XFS文件系统默认已支持
+
+
+设置acl访问控制策略
+• 使用 getfacl、setfacl 命令
+– getfacl 文档...
+– setfacl [-R] -m  u:用户名:权限类别   文档...
+– setfacl [-R] -m  g:组名:权限类别   文档...
+– setfacl [-R] -x  u:用户名    文档...     #删除指定的ACL策略
+– setfacl [-R] -b  文档...     #删除所有ACL策略
+
+[root@server0 /]# mkdir /nsd10
+[root@server0 /]# chmod  o=---   /nsd10
+[root@server0 /]# ls -ld /nsd10
+
+[root@server0 /]# su - lisi
+[lisi@server0 ~]$ cd /nsd10
+-bash: cd: /nsd10: Permission denied
+[lisi@server0 ~]$ exit
+
+[root@server0 /]# setfacl -m u:lisi:rx /nsd10   #单独设置权限
+[root@server0 /]# getfacl /nsd10    #查看/nsd10的ACL策略信息
+[root@server0 /]# su - lisi
+[lisi@server0 ~]$ cd /nsd10
+[lisi@server0 nsd10]$ pwd
+[lisi@server0 nsd10]$ exit
+[root@server0 /]# 
+
+ 设置黑名单
+[root@server0 /]# mkdir /public
+[root@server0 /]# chmod ugo=rwx /public
+[root@server0 /]# ls -ld /public
+
+[root@server0 /]# setfacl -m u:tom:--- /public/
+[root@server0 /]# getfacl  /public/
+
+####################################################
+[root@server0 /]# mkdir /nsd11
+[root@server0 /]# setfacl -m  u:lisi:rwx /nsd11
+[root@server0 /]# setfacl -m  u:dc:rwx /nsd11
+[root@server0 /]# setfacl -m  u:tom:rx /nsd11
+[root@server0 /]# setfacl -m  u:gelin01:rx /nsd11
+[root@server0 /]# getfacl /nsd11
+
+[root@server0 /]# setfacl -x u:dc /nsd11   #删除指定ACL策略
+[root@server0 /]# getfacl /nsd11
+[root@server0 /]# setfacl -x u:tom /nsd11  #删除指定ACL策略
+[root@server0 /]# getfacl /nsd11
+
+[root@server0 /]# setfacl -b /nsd11   #删除所有ACL策略
+[root@server0 /]# getfacl /nsd11
+######################################################
+
+
+使用LDAP认证
+      作用：网络用户认证，实现用户集中管理          
+
+• 轻量级目录访问协议
+– Lightweight Directory Access Protocol
+– 由服务器来集中存储并向客户端提供的信息,存储方
+式类似于DNS分层结构
+– 提供的信息包括:用户名、密码、通信录、主机名映
+射记录、......
+
+    网络用户: 用户名、密码信息存储在 LDAP 服务端
+    本地用户：用户名、密码信息存储在本地/etc/passwd
+
+  LDAP服务器：虚拟机classroom已经构建完成
+
+   客户端：虚拟机server
+   1.安装sssd软件包,与LDAP服务器沟通的软件
+  [root@server0 /]# yum -y install sssd
+
+   2.安装authconfig-gtk图形工具，配置sssd软件
+  [root@server0 /]# yum -y install authconfig-gtk
+
+   3.运行authconfig-gtk图形工具
+  [root@server0 /]# authconfig-gtk
+
+     选择LDAP
+      dc=example,dc=com             #指定服务端域名
+      classroom.example.com         #指定服务端主机名
+     勾选TLS加密
+      使用证书加密:
+     http://classroom.example.com/pub/example-ca.crt
+
+     选择LDAP密码 
+
+    4.重起sssd服务    
+  [root@server0 ~]# systemctl restart sssd    
+  [root@server0 ~]# grep ldapuser10 /etc/passwd
+  [root@server0 ~]# id ldapuser10 
+######################################################
+  在classroom虚拟机共享用户的家目录，让客户端server虚拟机访问
+
+什么是NFS共享
+• Network File System,网络文件系统
+– 由NFS服务器将指定的文件夹共享给客户机
+– 客户机将此共享目录 mount 到本地目录,访问此共享
+资源就像访问本地目录一样方便
+– 类似于 EXT4、XFS等类型,只不过资源在网上
+
+  NFS共享服务器：虚拟机classroom
+
+    客户端：虚拟机server进行访问共享
+
+
+[root@server0 ~]# mkdir /nsd12
+[root@server0 ~]# ls /nsd12
+
+• 查看服务端共享内容
+– showmount -e [服务器地址]
+[root@server0 ~]# showmount -e classroom.example.com
+
+• 挂载NFS共享目录
+– mount 服务器地址:目录路径 本地挂载点
+
+]# mount classroom.example.com:/home/guests   /nsd12
+]# ls /nsd12
+
+]# mkdir /home/guests
+]# mount classroom.example.com:/home/guests   /home/guests
+]# ls /home/guests
+
+]# su - ldapuser0
+
+[ldapuser0@server0 ~]$ pwd
+/home/guests/ldapuser0
+[ldapuser0@server0 ~]$ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

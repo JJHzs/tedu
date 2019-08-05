@@ -1,0 +1,363 @@
+使用教学虚拟机
+
+ 保证classroom优先开机
+
+使用rht-vmctl辅助工具
+• 控制教学用虚拟机
+– 格式:rht-vmctl  控制指令  虚拟机名
+
+真机还原三台虚拟机：优先还原classroot虚拟机
+
+[root@room9pc01 ~]# rht-vmctl  reset  classroom
+
+[root@room9pc01 ~]# rht-vmctl  reset  server
+
+[root@room9pc01 ~]# rht-vmctl  reset  desktop
+
+
+#####################################################
+附加权限
+
+Set UID
+• 附加在属主的 x 位上
+– 属主的权限标识会变为 s
+– 适用于可执行文件,Set UID可以让使用者具有文件属主的身份及部分权限
+– 传递所有者身份
+[root@server0 ~]# ls /usr/bin/mkdir             
+[root@server0 ~]# /usr/bin/mkdir    /opt/test01
+[root@server0 ~]# ls /opt/
+[root@server0 ~]# cp /usr/bin/mkdir /usr/bin/xixidir
+[root@server0 ~]# ls /usr/bin/xixidir
+
+[root@server0 ~]# /usr/bin/xixidir /opt/test02
+[root@server0 ~]# ls /opt/
+[root@server0 ~]# chmod u+s /usr/bin/xixidir 
+[root@server0 ~]# ls -l /usr/bin/xixidir
+
+[root@server0 ~]# ls -l /usr/bin/mkdir 
+[root@server0 ~]# su - student
+[student@server0 ~]$ /usr/bin/mkdir  abc01
+[student@server0 ~]$ ls -l
+[student@server0 ~]$ /usr/bin/xixidir abc02
+[student@server0 ~]$ ls -l 
+[student@server0 ~]$ exit 
+
+Sticky Bit
+• 附加在其他人的 x 位上
+– 其他人的权限标识会变为 t
+– 适用于开放 w 权限的目录,可以阻止用户滥用 w 写入
+权限(禁止操作别人的文档）
+
+[root@server0 ~]# mkdir /public
+[root@server0 ~]# chmod ugo=rwx /public
+[root@server0 ~]# ls -ld /public
+drwxrwxrwx. 2 root root 6 3月   5 10:03 /public
+[root@server0 ~]# chmod o+t /public/
+[root@server0 ~]# ls -ld /public/
+drwxrwxrwt. 2 root root 6 3月   5 10:07 /public/
+[root@server0 ~]# 
+
+###################################################
+查找文本内容
+• 根据字符串模式提取文本行
+– grep [选项]  '匹配模式'   文本文件...
+– 命令行  |  grep  [选项]   '匹配模式'
+
+• 常用命令选项
+– -v,取反匹配
+– -i,忽略大小写
+
+[root@server0 ~]# grep root /etc/passwd
+
+[root@server0 ~]# grep ROOT /etc/passwd
+[root@server0 ~]# grep -i ROOT /etc/passwd
+
+[root@server0 ~]# grep root /etc/passwd
+[root@server0 ~]# grep -v root /etc/passwd
+
+– ^word  以字符串word开头
+– word$  以字符串word结尾
+–   ^$       匹配空行
+
+[root@server0 ~]# grep ^root /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+[root@server0 ~]# grep root$ /etc/passwd
+[root@server0 ~]# grep bash$ /etc/passwd
+
+[root@server0 ~]# cat  /etc/default/useradd  #查看文件内容
+[root@server0 ~]# grep ^$ /etc/default/useradd 
+[root@server0 ~]# grep -v ^$  /etc/default/useradd
+
+在Linux大多数配置文件中，以#开头的行为注释行
+请显示文件内容的有效配置（去除空行与注释行）
+]# grep -v ^# /etc/login.defs     #去除以#开头
+]# grep -v ^# /etc/login.defs |  grep   -v  ^$
+]# grep -v ^# /etc/login.defs |  grep   -v  ^$  |  cat -n
+
+]# grep -v ^# /etc/login.defs |  grep   -v ^$  >  /opt/1.txt
+
+
+#####################################################
+查找文件
+• 根据预设的条件递归查找对应的文件
+– find  [目录]   [条件1]  [-a|-o]  [条件2] ...
+
+– 常用条件表示:
+  -type 类型(f文件、d目录、l快捷方式)
+  -name "文档名称"
+  -size +|-文件大小(k、M、G)
+  -user 用户名
+#######################################################
+-type  按照类型查找           
+[root@server0 ~]# find /boot/ -type l    #查找快捷方式
+[root@server0 ~]# ls /boot/grub/menu.lst 
+[root@server0 ~]# ls -l /boot/grub/menu.lst
+
+[root@server0 ~]# find /boot/ -type f    #查找是文本文件
+[root@server0 ~]# find /boot/ -type d
+
+[root@server0 ~]# find /root/ -type d    #查找是目录
+
+######################################################
+  -name '文档名称'
+
+[root@server0 ~]# find /etc/  -name 'passwd'
+[root@server0 ~]# find /etc/ -name 'passwd*'
+[root@server0 ~]# find /etc/ -name '*passwd*'
+
+[root@server0 ~]# mkdir /root/nsd01
+[root@server0 ~]# touch /root/nsd02.txt
+[root@server0 ~]# touch /root/nsd03.txt
+[root@server0 ~]# find  /root/  -name 'nsd*'
+
+[root@server0 ~]# find /root/ -name 'nsd*'  -a  -type d
+[root@server0 ~]# find /root/ -name 'nsd*'  -type d
+
+[root@server0 ~]# find /root/ -name 'nsd*'  -type f
+
+######################################################
+  -size +或-文件大小(k、M、G)
+  -user 用户名      #按照所有者进行查找
+
+[root@server0 ~]# find /boot/  -size  +10M
+[root@server0 ~]# find /boot/  -size  -10M
+
+
+[root@server0 ~]# find    /    -user  student
+[root@server0 ~]# find    /home    -user  student
+[root@server0 ~]# find    /var    -user  student
+
+
+• 根据名称查找,忽略大小写
+– -iname
+[root@server0 ~]# find /etc -name 'PASSWD'
+[root@server0 ~]# find /etc -iname 'PASSWD'
+/etc/passwd
+/etc/pam.d/passwd
+
+• 根据所属组
+– -group
+[root@server0 ~]# find /home/ -group 'student'
+
+• 限制目录查找的深度(最大层数)
+– -maxdepth
+[root@server0 ~]# find /etc/  -maxdepth  1   -name '*.conf'
+[root@server0 ~]# find /etc/  -maxdepth  2   -name '*.conf'
+[root@server0 ~]# find /etc/  -maxdepth  3   -name '*.conf'
+
+
+• 根据文件修改时间(所有的时间都是过去时间)
+  -mtime
+      
+      +10   ：10天之前的文档
+      -10   ：最近10天之内的文档
+
+
+[root@server0 ~]# find /var/  -mtime +100  -type f
+
+[root@server0 ~]# find /var/  -mtime -5  -type f
+
+
+####################################################
+
+案例2:查找并处理文件
+• 使用find命令完成以下任务
+– 找出所有用户 student 拥有的文件
+– 把它们拷贝到 /root/findfiles/ 文件夹中
+
+[root@server0 ~]# mkdir /root/findfiles
+[root@server0 ~]# find / -user student -type f
+
+• 使用find命令的 -exec 操作
+– find .. .. -exec 处理命令 {} \;
+– 优势:以 {} 代替每一个结果,逐个处理,遇 \; 结束
+]# find /  -user student -type f    
+]# find /  -user student -type f   -exec cp   {}    /root/findfiles/   \;
+
+]# ls -A /root/findfiles/
+
+]# find  /boot  -size  +10M 
+]# find  /boot  -size  +10M  -exec cp {}  /opt  \;
+]# ls  /opt
+#######################################################
+
+NTP时间同步
+
+NTP网络时间协议
+• Network Time Protocol
+– NTP服务器为客户机提供标准时间
+– NTP客户机需要与NTP服务器保持沟通
+
+• RHEL7客户端的校时服务
+– 软件包:chrony
+– 配置文件:/etc/chrony.conf
+– 系统服务:chronyd
+
+NTP时间服务器：虚拟机classroom
+NTP客户机：虚拟机server
+1.安装chrony包进行安装
+[root@server0 ~]# yum -y install chrony
+   
+软件包 chrony-1.29.1-1.el7.x86_64 已安装并且是最新版本
+无须任何处理
+
+[root@server0 ~]# rpm -q chrony
+
+2.修改配置文本（指定服务端位置）
+[root@server0 ~]# vim /etc/chrony.conf 
+  
+#server 0.rhel.pool.ntp.org iburst   #开头加上#号，变成注释
+#server 1.rhel.pool.ntp.org iburst   #开头加上#号，变成注释
+#server 2.rhel.pool.ntp.org iburst   #开头加上#号，变成注释
+server classroom.example.com iburst  #修改内容，指向classroom
+
+3.重起服务chronyd
+   daemon:守护神;（希腊神话中）半人半神的精灵;[计]守护进程
+
+[root@server0 ~]# systemctl restart chronyd
+[root@server0 ~]# systemctl enable chronyd  #设置开机自起
+
+4.测试时间同步
+[root@server0 ~]# date -s '2000-10-1  11:11:11'
+2000年 10月 01日 星期日 11:11:11 CST
+[root@server0 ~]# date
+2000年 10月 01日 星期日 11:11:13 CST
+[root@server0 ~]# systemctl restart chronyd
+[root@server0 ~]# date
+[root@server0 ~]# date
+[root@server0 ~]# date
+
+####################################################
+cron计划任务
+
+周期性任务
+cron任务概述
+• 用途:按照设置的时间间隔为用户反复执行某一项固定的系统任务
+
+• 软件包:cronie、crontabs
+• 系统服务:crond
+• 日志文件:/var/log/crond
+
+         
+管理计划任务策略
+• 使用 crontab 命令
+– 编辑:crontab -e [-u 用户名]
+– 查看:crontab -l [-u 用户名]
+– 清除:crontab -r [-u 用户名]
+
+如何编写crontab任务记录
+• 配置格式可参考 /etc/crontab 文件
+  – 分   时   日   月   周     任务命令行(绝对路径）
+
+   0  23  *  *  *     powerofff
+
+    30   8     *   *   * 
+
+    0    18    *   *   5 
+
+    0    18    *   *   1-5 
+
+    0    18    *   *   1,3,5,7
+
+    0     */2   *   *   *                #每两个小时
+
+	*:匹配范围内任意时间
+	,:分隔多个不连续的时间点
+	-:指定连续时间范围
+	/n:指定时间频率,每n ...
+
+    30   8     1   *   2     每月的一号的8点30分和每周二的8点30分 都执行
+
+   每分钟记录当前系统的时间，写入到/opt/time.txt
+[root@server0 ~]# date
+2019年 03月 05日 星期二 15:30:04 CST
+[root@server0 ~]# date >> /opt/time.txt
+[root@server0 ~]# cat /opt/time.txt
+
+[root@server0 ~]# crontab -e -u root  #以root身份编辑计划任务
+[root@server0 ~]# crontab -l -u root  #查看root用户的计划任务
+*  *  *  *  *      date >> /opt/time.txt  
+[root@server0 ~]# cat /var/spool/cron/root    #任务文件
+*  *  *  *  *      date >> /opt/time.txt
+[root@server0 ~]# 
+
+####################################################
+
+修改用户家目录
+[root@server0 ~]# useradd harry
+[root@server0 ~]# ls /home/
+
+[root@server0 ~]# usermod -d /opt/abc  harry
+[root@server0 ~]# grep harry /etc/passwd
+[root@server0 ~]# ls /opt/
+
+[root@server0 ~]# cp -r /home/harry/  /opt/abc
+[root@server0 ~]# ls -ld /opt/abc
+[root@server0 ~]# chown -R harry:harry  /opt/abc/
+[root@server0 ~]# ls -ld /opt/abc/
+
+[root@server0 ~]# ls -lA /opt/abc/
+
+################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
