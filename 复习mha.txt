@@ -1,0 +1,240 @@
+Mha
+
+51-55 彼此无密码连接!!! scp -r /root/.ssh root@192.168.4.55:/root
+
+51-56 都装上 perl-*
+cd mha-soft-student  && yum -y install perl-* (装另外的 perl依赖包)
+yum -y install mha4mysql-node-0.56-0.el6.noarch.rpm
+
+56 管理主机 (必须先 装 perl-node 之后 再 源码安装manager)
+tar -xvf mha4mysql-manager-0.56.tar.gz 
+perl Makefile.PL
+make && make install
+masterha_ 双 tab 就会有命令!
+
+51-53 是主库 和 精选主库所以必须要 开启binlog日志 半 同步复制!!
+54-55 是 纯从库!
+
+51 主机:
+vim /etc/my.cnf
+ [mysqld]
+plugin-load =	(装载插件) (装载master 和slave 的模块) "rpl_semi_sync_master=semisync_master.so;rpl_semi_sync_slave=semisync_slave.so"
+rpl-semi-sync-master-enabled = 1	开启master 半同步复制功能
+rpl-semi-sync-slave-enabled = 1	开启slave  半同步复制功能
+server_id=51				主库要指出自己的ID
+log-bin=master51				主库要起 binlog日志 每个机子的 日志ID要不一样
+binlog-format="mixed"			开一不写 模式
+
+relay_log_purge=off 
+( 因为主从同步的时候,从库只保留最近的 两个中继日志,所以在[配置集群的时候 要把他 自动删除 中继日志文件的功能 给关了 ,以防 加入做从库的时候 还没有来得及执行中继日志里的数据,就到了自动删除的时间, 就执行不了了 ,所以 三个 精选主库的 服务器 必须把他给禁用掉! )
+			
+
+mysql -uroot -p123qqq...A
+
+grant replication slave on *.* to plj@"%" identified by "123qqq...A";
+show slave status; 看一下自己是否是从库.
+set  global relay_log_purge=off; (临时 删除 删除中继日志的功能.)
+
+52 主机:
+vim /etc/my.cnf
+server_id=52
+log-bin=master52
+plugin-load = "rpl_semi_sync_master=semisync_master.so;rpl_semi_sync_slave=semisync_slave.so"
+rpl-semi-sync-master-enabled = 1
+rpl-semi-sync-slave-enabled = 1
+relay_log_purge=off
+
+mysql -uroot -p123qqq...A
+change master to master_host="192.168.4.51",master_user="plj",master_password="123qqq...A",master_log_file="master51.000003",master_log_pos=718;
+start slave;
+show slave status\G;
+
+Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.4.51
+                  Master_User: plj
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: master51.000003
+          Read_Master_Log_Pos: 718
+               Relay_Log_File: mysql52-relay-bin.000003
+                Relay_Log_Pos: 319
+        Relay_Master_Log_File: master51.000003
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+         .........
+         .........
+
+
+53 主机:
+vim /etc/my.cnf
+server_id=53
+log-bin=master53
+plugin-load = "rpl_semi_sync_master=semisync_master.so;rpl_semi_sync_slave=semisync_slave.so"
+rpl-semi-sync-master-enabled = 1
+rpl-semi-sync-slave-enabled = 1
+relay_log_purge=off
+
+mysql -uroot -p123qqq...A
+change master to master_host="192.168.4.51",master_user="plj",master_password="123qqq...A",master_log_file="master51.000003",master_log_pos=718;
+start slave;
+show slave status\G;
+
+51,52,53 是需要精选 主库 所以要 开启半同步 模块!
+====================================
+54 主机:
+vim /etc/my.cnf
+server_id=54
+plugin-load = "rpl_semi_sync_slave=semisync_slave.so"
+rpl-semi-sync-slave-enabled = 1
+relay_log_purge=off
+systemctl restart mysqld
+
+mysql -uroot -p123qqq...A
+change master to master_host="192.168.4.51",master_user="plj",master_password="123qqq...A",master_log_file="master51.000003",master_log_pos=718;
+start slave;
+show slave status\G;
+
+55 主机:
+vim /etc/my.cnf
+server_id=55
+plugin-load = "rpl_semi_sync_slave=semisync_slave.so"
+rpl-semi-sync-slave-enabled = 1
+relay_log_purge=off
+systemctl restart mysqld
+
+mysql -uroot -p123qqq...A
+change master to master_host="192.168.4.51",master_user="plj",master_password="123qqq...A",master_log_file="master51.000003",master_log_pos=718;
+start slave;
+show slave status\G;
+
+配置管理主机---56 :
+
+mkdir /etc/mha_manager
+主配置的 模板文件
+cp /root/mha-soft-student/mha4mysql-manager-0.56/samples/conf/app1.cnf  /etc/mha_manager
+把源码包里的 sample 下的 conf 下的 app1.cnf 拷贝!!!!!!!!
+
+vim /etc/mha_manager/app1.cnf 
+[server default]					56 主机 管理服务器的 默认配置!
+manager_workdir=/etc/mha_manager		56 管理主机的 工作目录(刚创建的)
+manager_log=/etc/mha_manager/manager.log    把 日志 定义在 我们的 工作目录下 名叫 manager.log
+
+master-ip_failover_script=/etc/mha_manager/master_ip_failover
+( 指定 故障切换脚本!!!!!!! )  perl脚本  需要把脚本 拷贝到 工作 目录 .(放哪里 无所谓 但是必须得找到)
+
+ssh_user=root		ssh 无密码连接的时候的 用户名
+ssh_port=22			和端口号
+
+repl_user=plj		主库给从库 授权同步 数据的 链接用户名
+repl_password=123qqq...A 	和密码
+
+user=root			56 去监视 数据库 服务器 51-55 使用 链接服务器的 用户名
+password=123qqq...A	和密码  ( 需要在 56上 创建 并加 密码 然后在51 主库上授权 从库 就会自然同步!)
+
+[server1]
+hostname=192.168.4.51	
+candidate_master=1	51 竞选主库
+
+[server2]
+hostname=192.168.4.52
+candidate_master=1	52 竞选主库
+
+[server3]
+hostname=192.168.4.53
+candidate_master=1	53 竞选主库
+
+[server4]
+hostname=192.168.4.54
+no_master=1			不竞选主库
+
+[server5]
+hostname=192.168.4.55
+no_master=1			不竞选主库
+
+cp /root/mha-soft-student/master_ip_failover  /etc/mha_manager/
+
+vim +35 /etc/mha_manager/master_ip_failover 
+my $vip = '192.168.4.100/24';  # Virtual IP  把ip改成自己需要的 VIP
+
+==============================================
+
+ifconfig eth:0 192.168.1.100/24  在 主库 51 主机上 eth0 口 上 绑定 VIP
+
+51:
+主库给从库同步数据的用户 需要在 当前主库 备主上 都得有 (51,52,53)
+mysql -uroot -p123qqq...A -e 'show grants for plj@"%"'
+52:
+grant replication slave on *.* to plj@"%" identified by "123qqq...A";
+53:
+grant replication slave on *.* to plj@"%" identified by "123qqq...A";
+
+51-55 都必须 添加管理主机 监控的用户!
+只需要 在51 上授权 其他就该 都同步 过去!
+51:
+grant all on *.* to root@"%" identified by "123qqq...A";
+
+在52 上验证
+mysql> show grants for root@"%";
+
+56 测试:
+
+masterha_check_ssh --conf=/etc/mha_manager/app1.cnf 测试 ssh
+......
+......
+Thu Jul  4 17:53:39 2019 - [info] All SSH connection tests passed successfully.
+
+masterha_check_repl --conf=/etc/mha_manager/app1.cnf
+
+
+
+
+
+############################################################3
+ps 看进程的
+uptime cpu负载
+free 看内存和交换分区的!
+swapon -s 看交换分区状态信息的
+df -h看 硬盘 使用情况
+ifconfig 网卡信息
+netstat 或 ss 看 进程信息的
+ping 看能否ping 同 目标主机 或者 自己能否和别人通信的
+traceroute   路由追踪!!!!!!!
+iostat      
+
+
+.主从同步,读写分离配置和半同步复制配置
+
+新办公场地启用,对机房的服务数据可以实现灾备的 故障切换,保证业务正常运行;
+当数据库出现宕机时,可以快速恢复,将损失控制在最小范围内.
+职责描述:主要负责主从服务器的配置和基础优化;和组员沟通,确定数据库主库和从库;确定数据库服务器可用性,备份数据.
+技术实现:	1, 一台作为代理服务器,一台服务器作为主服务器,两台作为从服务器够久安环境;
+2,在代理服务器部署 mycat ,与其余服务器实现数据的读写分离,减轻之间单台服务器的压力;
+3, 在主库和从库服务器上开启半同步复制,保证数据的一致性;
+4,使用innobackupex 对数据库进行完全备份及增量备份,配合脚本和计划任务实现定期自动备份操作.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

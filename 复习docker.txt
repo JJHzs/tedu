@@ -1,0 +1,1008 @@
+docker
+pstree -p
+ps -ef 
+echo $$
+
+基于虚拟化技术 需要 做一个系统 虚拟化一个cpu 磁盘等等
+容器的思想就是 资源,cpu 内存 等等 还都是真机的 只不过  内核 对他有个限制!!!
+1 Cgroup (Control Gropups)  资源管理 (就是限制 资源)
+2 NameSpace 		   进程隔离 命名空间
+3 Selinux			   
+由于是 在 物理机上实施隔离 所以 启动一个 容器 就像启动一个进程一样快速!!
+
+
+docker 是相当于 libvirt 是管理容器的一个命令 没有docker 也可以 敲一些命令也可一做一个容器
+容器 和 虚拟机
+
+libvert 是管理虚拟机 如果没有需要自己去 内核找 什么种线地址 中段地址 ip号等 会疯的
+有了libvert 可以更好的管理虚拟机.
+
+如果没有docker 也可以手工敲出命令 需要了解很多底层的东西 如果做一个容器 就想写一篇几千字的作文,那要疯的啊 做容器目的就是为了更快!!!!
+就是替用户管理容器的  一套系统!
+
+NameSpace 		   进程隔离 命名空间
+六大隔离措施:
+1 hostname
+2 ip地址 网络
+3 disk 磁盘 (chroot)
+4 proc (ps可以看见得)
+5 ipc (信号项量 比如 kill -9 是杀死一个程序的信号)
+6 username 
+
+装包改配置器服务
+包在哪?
+
+安装前 
+需要 64 位 操作系统
+至少需要 RHEL7 (强烈推荐7   6.5 是给内核 加的补丁. 各种问题!!! 内核3 以上)
+关闭防火墙 ( 他自动接管 防火墙 就好比openstack一样 )
+
+注意 需要 给的 镜像光盘里 extra里的 rpm包
+yum -y install docker
+systemctl restart docker
+systemctl enable docker
+
+docker 基本概念
+两个基本  核心概念：
+1 镜像		镜像采用分层设计技术！！！！（这么多层 怎么管理? --打个tar包即可）
+比如在虚拟机上第一层 加一层 然后 docker 官方在做一层 我们用的时候还在做一层!前 3 或者4 层是只读的,就是后端盘!!! 不能修改唯一可以修改的就是 最后一层!! !
+2 容器
+#  ###　　＃　镜像是模板 容器 是拿镜像启动的实例!!  容器都是基于镜像启动的!
+
+镜像 是启动的核心
+＊＊＊　镜像 采用分层设计　＊＊＊　=====>>>底层是qcow2 然后再基于底层 做一个磁盘 再 基于新的磁盘上面  再做一个
+使用 快照技术的 
+cow 技术 确保 底层数据不丢失!   (说白了就是 摞了好几层!!!)
+
+命令:
+一　：
+[root@tiaobanji ~]#  docker images 	=====> 查看镜像的命令!
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+
+镜像哪来的?
+1,可以自己做  (往往自己做的优化的不够好,因为越小越精确!)
+2,通过官方 下载!! ==> docker search centos
+[root@tiaobanji ~]# docker search centos
+瞎子啊官方基本的镜像 ,然后自己需要啥自己改!
+
+		下载的是什么													     是否是官方发布的
+INDEX      NAME                               DESCRIPTION                                     STARS     OFFICIAL   AUTOMATED
+docker.io  docker.io/centos                   The official build of CentOS.                   5437      [OK]       
+docker.io  docker.io/ansible/centos7-ansible  Ansible on Centos7                              121                  [OK]
+docker.io  docker.io/jdeathe/centos-ssh       CentOS-6 6.10 x86_64 / CentOS-7 7.6.1810 x...   110                  [OK]
+
+docker search nginx
+docker search mysql
+
+下载和上传!!!
+
+先搜索 
+docker search busybox
+docker.io   docker.io/busybox                   Busybox base image.  
+
+docker help pull 了解下pull的命令使用方的方法.
+
+下载:
+docker pull  docker.io/busybox
+
+上传:
+docker push (官方不会轻易允许  需要 注册账户, 因为不安全!)
+
+docker +命令
+docker + 回车 可以看有哪些
+docker help pull 看 pull的 命令!
+
+
+docker images
+
+( 镜像的 )名称			 标签			   ID
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+docker.io/busybox   latest              e4db68de4ff2        3 weeks ago         1.22 MB
+
+规定: ID 必须是唯一的 名称可以重复 标签可以重复
+  但是名称 + 标签不可以重复!  类似于 路径加文件名 (/root/etc/passwd, /标签/名称)
+
+备份:   (名称标签和ID) (规定:镜像的ID必须是唯一的,不能重复.镜像的名称和标签可以重复,但是名称加标签=ID 不能重复,就好比系统中 路径加   文件名 是唯一的! )  不写标签 默认就是  latest
+
+docker 备份  -o (output)  备份成什么名字    名称	:     标签
+docker save -o busybox	   docker.io/busybox : latest
+
+file busybox
+busybox: POSIX tar archive
+备份后的 busybox 实际是一个 tar包 所以一般 备份的时候 起的名字叫 busybox.tar
+
+tar -tvf busybox.tar 实际是 十六进制的 tar包文件!
+
+回复: 先从 docker01 上把 刚刚 的tar包 scp给 docker02
+	(装载)  (input)
+docker load  -i   busybox.tar	把刚刚 从docker01上scp 来的文件装载上!
+
+###############################################################3
+docker images	docker查看镜像
+docker pull		下载
+docker search	查找
+docker push		上传
+docker save		备份
+docker load		还原
+###############33333333333333333333333####################333333333333333333333
+
+启动容器:
+docker 子命令  - 参数 	镜像名称:标签 		启动命令
+ 	 run   it	docker.io/centos:latest(默认标签) /bin/bash(默认命令,这是容器内部的 命令!)	
+docker run 是 (创建)启动一个全新的 容器
+
+[root@docker01 ~]# docker run -it docker.io/centos:latest /bin/bash
+[root@d6e6b5443cf8 /]# hostname
+d6e6b5443cf8
+
+docker里 没有yum源 没有 常用命令需要自己装!
+yum provides vim ifconfig net-tools iproute  psmisc tree
+
+6 大 命名空间:
+hostname
+ifconfig 
+ls /
+pstree -p (或者 ps -ef)
+kill -9 进程 pid号
+
+启动系统 和 启动 服务是有区别的!
+
+ubuntu/debin 和 redhat 的区别就是 
+1 dpkg == rpm 
+2 apt-get == yum
+
+dpkg -l == rpm -q
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+docker 基本命令 :::::::::::::
+docker images	docker查看镜像
+docker pull		下载
+docker search	查找
+docker push		上传
+docker save		备份
+docker load		还原  docker load -i mysql.tar
+docker history	查看 镜像的 制作历史 (注意只能有一个CMD 虽然最下面有个 CMD 但是 他是 从上面往下找 找到就返回了! )
+docker inspect	查看镜像最底层 详细 信息 + 镜像/容器/其他docker的组件 比如 网络等  查看详细信息!
+docker inspect + 镜像 是看镜像的详细信息
+		   +　容器　是看容器的详细信息！
+
+docker inspect docker.io/nginx
+	   "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "NGINX_VERSION=1.17.1",
+                "NJS_VERSION=0.3.3",
+                "PKG_RELEASE=1~stretch"
+            ],
+            "Cmd": [
+                "nginx",
+                "-g",
+                "daemon off;"
+            ],
+------------------------------------------------------------
+ENV指的是环境变量
+Cmd 指的是 启动命令! 完整的启动命令!!
+------------------------------------------------------------
+
+docker inspect nginx 
+docker history nginx
+
+docker rmi  //删除本地镜像	   ==>  docker rmi docker.io/busybox:latest=docker busybox 只有文件名是唯一的 并且标签是latest的时候 才可以投不加标签!!!!!! 因为他是路径加文件名
+docker save   镜像 备份成 tar包
+docker load	  使用tar包 导入镜像
+docker search 搜索镜像
+docker tag	  修改镜像名称和标签
+docker tag docker.io/busybox:latest aaa:123  ===> docker 标签   旧的名字:旧标签  新的
+
+tag 打标签就好比是　做　了一个硬链　接　　image_id 就是;那个链接 ,链接 至少 有一个 !打标签 只是 指向了  这个 image-id 
+名字:新标签
+(名字可以相同, 标 签按可以相同 ,但是 名字加标签 就是不能相同  是 唯一的    ID 就 是唯一的! ID 类似于 一个链接!!)
+image id 只只能至少有一个 如果 创建过容器的 镜像 是不能删除的!  判断是 img id (至少有一个)
+打一个标签 只不过是 指向了 这个img id 打了 几个标签 可以删很多个 至少留一个!!!!!!!! (最后一个 就会联通 镜像一起删 要判断 有没有 用它起过容器 如果起过 就不能删,没有就可以删! ) 标签 还可以 标示 私有仓库的地址.
+
+++++++++++++++++++++++++++++++++++++++++++++==
+docker search 和docker pull 都必须 有网 否则 下载不了镜像!!!
+
++++++++++++++++++++++++++++++++++++++++++++++++
+
+容器的常用命令!!!!
+docker run  == 最复杂的命令!!!! 启动一个容器!!!  他是 创建一个全新的容器 不是一个 简单的启动容器!
+docker ps	查看运行中的容器 (docker images 查看有哪些镜像!)
+docker stop
+docker start
+docker restart
+docker attach | exec
+docker inspect
+docker top	从容器 外面就能 看到 容器 内部 运行的时候是 什么命令!!!
+docker rm
+
+docker run -itd
+i 是交互式的
+t 是终端
+d 是后台进程 deamon
+docker run -i docker.io/nginx 出现交互式 界面 (还以为是宕机了)
+docker run -itd docker.io/nginx 进程 放到后台 并给你一个 16进制的 id
+ps -ex |grep nginx 查看一下进程!
+
+注意: docker run -itd + 服务或者系统 docker 的 ip是 从172.17.0.1 往后排 启动第一个 ip就是 172.17.0.1 第二个就是 172.17.0.2 ........
+
+----------------------------------------------------------------------------------------------------------------
+docker ps
+CONTAINER ID        IMAGE                     COMMAND                  CREATED             STATUS              PORTS               NAMES
+dbeb5474cbba        docker.io/nginx:latest    "nginx -g 'daemon ..."   3 minutes ago       Up 3 minutes        80/tcp              silly_ritchie
+
+从第一个往后 依次是:
+容器id  启动容器的镜像 启动的命令 启动多长时间了   容器需要坚挺的端口和协议 容器的名字!
+
+docker ps 查看启动的 运行中的容器
+docker ps -a 查看所有的 容器
+docker ps -aq 只查看容器的 id
+docker ps -q 是只看 运行的容器的进程号!!
+
+
+停止 只需要docker stop + 容器 id
+启动        docker start + 容器 id
+重启	    docker restart + 容器 id
+--------------------------------------------------------------------------------------------------------------------------
+docker inspect 还能 查看 容器的 ip mac 地址等!
+
+docker top	  从容器外面查看 容器里运行了什么 命令 相当于在容器里执行 ps 命令!
+首先 docker ps -a 查看下 id 
+然后 docker top id 的前几个字 (只要不和其他重复 就可!)
+
+docker rm + id 删除 一个容器 (运行的 容器 先stop 再删除!)
+
+docker 支持 命令重复!!!!!
+比如 : :
+
+docker stop $(docker ps -q)
+3691be756e1d
+9e794abfda6c
+
+
+docker rm $(docker stop $(docker ps -aq))
+dbeb5474cbba
+05a05b87b5e0
+c789ba0905d7
+d6e6b5443cf8
+
+docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+
+空了 , 删完了!
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+docker atach/exec
+
+docker run -it docker.io/centos:latest  启动一个 centos 容器
+exit
+docker ps
+什么 也没有
+docker ps -a 发现他 退出了
+docker start 刚才的 id号!
+
+++++++++++++++++++++++++++++++++++++
+docker run -it docker.io/centos:latest  =====>看清 不是 docker run -itd docker.io/centos:latest
+[root@d1ccd8a24ebe /]# exit
+exit
+退出了
+
+----------------------------------------------------------------------------------------------------------------------------
+docker ps 发现 容器死了 ==> 必须 得 ===>  Ctrl + p + q			-
+											-																							
+docker start c935	====>启动了 怎么进去呢?????					-
+1, docker attach									-
+2, docker exec  									-
+docker exec -it 3691be /bin/bash (注意必须 得有命令, 是-it 而不是-itd)	-
+docker run -it  docker.io/nginx /bin/bash (默认的) 
+docker run -it  docker.io/nginx (不加 /bin/bash 会宕机 因为他是一个服务.)
+docker run -itd docker.io/nginx 就不会宕机了!!!!!!!!!!
+
+run 是 新起一台 容器									-
+exec 是 原来就有的 现在要进去!!!							-
+											-
+上帝进程!!										-
+systemd(1)----------NetworkManager						-
+											-
+-----------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+请问 : 
+1  为什么退出了?
+2  start 后 再怎么 进去呢?
+
+88888888888888888888888888888888888
+Ctrl + p + q 就把 上帝放到后台了! 8
+				       8
+docker attach/exec + id	     8
+88888888888888888888888888888888888
+
+docker run -it docker.io/centos:latest
+
+pstree -p
+1  bash(1)---pstree(57)  ===> 当前的 bash 是上帝进程 1  所以 如果exit 就把上帝退出了 上帝死了 所有进程 就 都死了! 
+所以推出的时候 要 ctrl + p + q 等于说 是 把上帝进程 bash 放到后台去了!!!!!!!!!
+2  
+   第一 再回去找上帝 ===> docker attch +id
+	pstree -p 0
+	echo $$
+	1
+	ctrl + p + q
+
+   第二 再启动一个 子进程
+	docker exec -it id号 /bin/bash  (注意 : /bin/bash 是 容器内部的命令!!)
+
+	pstree -p 0  ============>为什么是pstree -p 0 结果不是 1  pstree -p的结果是 1
+	?()-+-bash(1)
+    	    `-bash(14)---pstree(31)
+(可以 exit了 )
+
+上帝分两种 一种搭理人的(系统 比如centos) 一种不搭理人的(比如是nginx服务)
+不打理的 怎么办  可以运行
+docker run -itd id 不搭理
+但是
+docker run -itd id /bin/bash
+echo$$　==>7 不是 1 了 ,变成不是上帝了 又可以退出了!
+
+docker attach 只有在处理报错的时候 (这些错误 没有写到日志里 但是 终端 爆出来了错误 ) 这 有 情况需要进去 
+一般 维护的 时候 都 不要以上帝的身份进去!!   
+
+===========================================================================
+docker 启动 nginx 和http
+首页写成 hello world
+
+=====================================================
++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+>>>>>>>>>>>>>>>DOCKER  第二天!!!<<<<<<<<<<<<<<<<
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+======================================================
+
+接着昨天的问题 启动 nginx 和 httpd
+
+要找到 nginx 的 默认首页
+第一种方法:
+
+首先 启动一个 nginx 容器
+
+[root@ecs-cc06 ~]# docker run -itd docker.io/nginx
+dade38375e2e727d5205e50b3e3d677bf9a49491ba70b171363187a0bbdfea0a
+[root@ecs-cc06 ~]# docker exec -it dade3837 /bin/bash
+root@dade38375e2e:/# 
+
+或者
+
+docker run -it docker.io/nginx /bin/bash
+
+cat /etc/debian_version
+9.9
+这个nginx 是个debian系统所以 不能用yum 
+
+dpkg -l | grep nginx  		dpkg -l 列出所有的包!!!!
+
+ii  nginx                     1.17.1-1~stretch       amd64        high performance web server
+包 的名字就叫 nginx
+
+
+dpkg -L  nginx  |grep conf	dpkg -L 检查 安装路径!!!
+/etc/nginx/nginx.conf ===> 包的安装路径!!!!1
+
+ cat /etc/nginx/nginx.conf
+..........
+........
+
+ include /etc/nginx/conf.d/*.conf;
+}
+
+cd   /etc/nginx/conf.d     
+
+ls
+default.conf
+
+cat default.conf
+
+    location / {
+        root   /usr/share/nginx/html;  ===>  默认首页的家目录!!!!!!
+        index  index.html index.htm;
+
+第二种方法:
+nginx (单敲 nginx启动 )
+which nginx 
+/usr/sbin/nginx
+
+nginx -h
+ -v            : show version and exit
+ -V            : show version and configure options then exit
+ -t            : test configuration and exit
+ -T            : test configuration, dump it and exit
+
+nginx -T 是 测试配置 打印 再 退 出!
+nginx -V 是查看版本 配置 模块 再退出!
+
+写 页面:
+cd /usr/share/nginx/html
+ ls
+50x.html  index.html
+echo "hello world" > index.html
+exit
+
+curl 172.17.0.3
+hello world
+
+二 centos 里安装 httpd 并 写个页面  hello world
+docker run -it docker.io/centos:latest
+配置 yum源
+华为云里 : 
+
+curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.myhuaweicloud.com/repo/CentOS-Base-7.repo
+
+yum -y install httpd
+
+下一步 启动 httpd (不能用systemctl start) 
+原因 : 没有 systemd 进程!!!!!  上帝进程 就是bash 子还能自己启动!!!
+
+cat /usr/lib/systemd/system/httpd.service
+
+[Service]
+Type=notify
+EnvironmentFile=/etc/sysconfig/httpd
+ExecStart=/usr/sbin/httpd $OPTIONS -DFOREGROUND
+ExecReload=/usr/sbin/httpd $OPTIONS -k graceful
+ExecStop=/bin/kill -WINCH ${MAINPID}
+
+启动的命令 就是  /usr/sbin/httpd $OPTIONS -DFOREGROUND
+但是 他挂在 那里不动了 所以 要 先 写网页 在启动!!
+
+rpm -ql httpd |grep html
+
+
+删除容器 开始第二天!
+docker rm $(docker stop $(docker ps -q))
+
+
+++++++++++++++++++++++++++++++++++++++++++==
+>>>>>>>>>>>>>docker 第二天 <<<<<<<<<<<<<<<<
+
+自定义镜像 
+自定义 镜像 仓库!
+
+机房带宽:
+600 - 1000 1 /M
+
+中国通信管理局  管理,有私自 做网站 会给 删掉!
+
+问题 : docker 官方的 镜像 有一个公共的特性 都指向 官方yum 这个 有问题
+我们实际生产中 yum 源 不能是官方 第一太远了 第二 太费流量, 带宽 也受不了! 需要在自己内部搭一台 yum 源!  私人 是不可以 拉一台 宽带 做个 httpd 服务 ,这个必须的有 IDC 资质 
+并且 ifconfig 命令 都没有 所以 做一个镜像.
+
+>>>>>>>>>docker 自定义镜像<<<<<<<<<<<<<<<
+docker commit  或者  docker file
+选择一个 基础镜像 /centos
+
+yum -y install net-tools vim psmisc tree lftp  iproute
+{net-tools 是ifconfig 的包,psmisc pstree 的命令 iproute是 ss的命令! }
+
+ 
+docker commit
+原理 : 做 容器 得有一个 后端盘 我们在这个基础上再做一个前端 盘! 所有的操作也都在这个前段盘  只需要 把前段盘 和后端 盘 一起打个包 就好了!!! 
+首先 运行一个 centos 里面配好 yum 包等!  yum -y install  ...
+然后 ctrl p+q 
+docker ps -a 查到 那个 要做 的后端盘的 id 
+第二步, commit 
+docker commit 容器的 id  myos(起个 镜像的名称): latest
+第三步, docker images
++++++++++++++++++++++++++++++++++++++
+总结:
+docker images 
+docker.io/centos  9f3848
+
+1 .
+起一个容器 
+docker run -itd centos
+52347a5940fba518f221c8f03419ef3a1144f150bce4bb0fcc801a6ef4b89d58
+docker rm 52
+报错: 不能删一个 正在运行的 请尝试停止运行容器!!
+docker stop 52
+docker rm 52 ==>52  可以删除
+
+2
+docker run -it centos
+c3791e5d0d5d527b52da2c69d25fdc70e448b65cf90cc73f8142e2f779314d05
+
+docker rmi 9f38
+报错 :无法删除正在使用的 镜像!
+
+3
+docker run -it centos
+ 766b5bd389d2
+docker commit 766 myos:latest
+sha256:4c4ae64be1ae67a18840e54071db5c93d24563d7e5a5bdfab80ee431a1ac93de
+
+注意 docker commit 做 私有镜像 必须 以 容器为 模板 不能以 镜像为模板!!
+
+
+docker rm 76
+76    			==> 做过私有镜像后 原容器可以删除
+
+docker rmi 9f	===> 做过私有镜像后 原镜像不可以删除
+镜像具有从属子镜像 所以不能删除!!
+
+
+docker file 脚本::::::::::::::::::::::::::::::::::::::::灰常强大的!!!
+
+脚本语法格式:
+FROM :基础镜像			==>你从哪里盖楼?
+MAINTAINER: 镜像创建者信息
+EXPOSE: 开放的端口
+ENV: 设置变量
+ADD: 复制 文件 到镜像		==>把真机 里的文件放到 容器里面去!!  当前文件夹!!
+RUN: 制作竟像是执行的 命令 ,可以有多个
+WORKDIR: 定义容器默认工作 目录!
+CMD :容器启动时执行的命令! 尽可以有一条CMD
+
+====================================
+mkdir aa 
+touch Dockerfile	注意 Dockerfile 的大小写
+			就是把 之前做的命令 histyory 写进去!!!
+		
+vim Dockerfile
+FROM docker.io/centos:latest
+RUN rm -rf /etc/yum.repos.d/*.repo
+ADD local.repo /etc/yum.repos.d/local.repo		遇到复杂的 文件 把他先编辑好 然后add 进去!!
+RUN yum -y install net-tools vim psmisc tree iptoute
+RUN yum repolist
+
+docker build -t(表示创建的名称) myos:test .(在当前目录查找)
+
+华为云的 yum源:
+FROM docker.io/centos:latest
+RUN rm -rf /etc/yum.repos.d/*.repo
+RUN curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.myhuaweicloud.com/repo/CentOS-Base-7.repo
+RUN yum makecache
+RUN yum -y install net-tools vim psmisc tree lftp iproute
+RUN yum clean all
+
+修改默认的启动命令: 一般是 默认 标签 :latest 启动命令是 /bin/bash
+需要用到 CMD
+CMD 的 格式: CMD ["/bin/ls","-l","-a"] == ls -l -a 
+
+vim Dockerfile
+FROM myos:latest
+CMD ["/usr/bin/python"]
+
+运行:
+docker build -t myos:python
+docker images 
+myos  python   b6c4e6
+myos  test     abc55
+
+docker run -it myos:latest
+[root@4a64354c134b /]# exit
+
+docker run -it myos:python
+Python 2.7.5 
+>>> 
+
+========================
+来点 复杂一点的 
+先 看个问题:
+ssh docker02 touch f1 ==>在 (/root/f1)
+ssh docker02 cd /tmp
+ssh docker02 touch f2 ==>在( /root/f1)
+
+f2 为什么不在 /tmp下 因为 ssh后退出了
+换言之 :
+
+RUN touch f1
+RUN cd /tmp
+RUN touch f2
+====>结果 就是 f2 不在 /tmp下 因为 他 cd 后又退出了!
+
+那 又想用 cd 咋办?  cd 改成==> WORKDIR 相当于执行了一个cd 并且 以后的命令都在 WORKDIR :/tmp 下
+WORKERDIR : 定义 容器 默认工作 目录!
+
+封装服务!!!
+怎么封装成一个 ssh的服务  
+没有思路 就先 手工 做一遍!!
+
+mkdir aa
+cd aa   touch  Dockerfile
+
+vim Dockerfile
+FROM docker.io/centos:latest
+RUN rm -rf /etc/yum.repos.d/*.repo
+ADD local.repo /etc/yum.repos.d/local.repo
+RUN yum -y install  net-tools vim psmisc tree lftp iporoute
+RUN yum clean all
+RUN yum makecache && yum repolist
+
+docker build -t myos:test .
+-t 后跟 我们要做的镜像 	. 表示 当前目录 !!(查找 Dockerfile 和local.repo 也是从当前 目录查找 !! )
+
+docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+myos                test                11835b635c39        About an hour ago   642 MB
+
+docker run -it myos:test
+[root@a1f380a96230 /]# 
+
+测试下:
+
+ ls /etc/yum.repos.d/           
+local.repo
+ifconfig 
+ vim
+
+命令都在!!!
+============
+CMD设置启动命令!!!
+想把 myos:latest 启动命令 /bin/bash 换成 /usr/bin/python
+既然不对 文件内容修改 就不用运行RUN ADD了直接 运行CMD
+
+语法 
+加入是 /bin/ls =>写入到 CMD 就是 ["/bin/ls"]
+ 如果有参数 ls -l -a 或者 /bin/ls -l -a  
+就是==> CMD ["/bin/ls","-l","-a"]
+即 命令 要用引号 引起来 然后用 逗号 当成  空格 隔开
+
+改成 /usr/bin/python (没有参数)
+就是
+FROM myos:latest
+CMD ["/usr/bin/python"]
+
+docker build -t myos:python .
+测试运行:
+
+
+
+docker run -it myos:python
+>>> 
+Ctrl +D 退出 !!!!!
+
+docker run -it myos:test
+[root@cfa7e8948f7e /]
+
+
+
+如何封装服务  就是docker run 之后 这个服务就起来了!!
+
+Dockerfile 不知道如何写 先 手动 运行一下
+先运行一个 有yum的容器!
+
+docker run -it myos:test
+[root@6aff16ab2180 /]
+yum provides ssh
+openssh-server-7.4p1-16.el7.x86_64
+
+想看看他如何启动的 
+cat /usr/lib/systemd/system/sshd.service
+
+[Service]
+Type=notify
+EnvironmentFile=/etc/sysconfig/sshd
+ExecStart=/usr/sbin/sshd -D $OPTIONS
+ExecReload=/bin/kill -HUP $MAINPID
+
+cat /etc/sysconfig/sshd  看一下 启动的环境  有什么参数!! 发现 没有$OPTIONS  所以可以用 /usr/sbin/sshd -D 启动
+
+启动后发现报错   没有 秘钥 公钥 所以 需要初始化秘钥 ==>sshd-keygen (而不是ssh-keygen)
+
+没有 /etc/rc.d/init.d/functions 包
+yum provides /etc/rc.d/init.d/functions
+yum -y install  initscripts
+sshd-keygen 不报错了
+/usr/sbin/sshd -D  启动 sshd 服务
+ 起 完 sshd 服务 要 想 连上去 也是 需要密码的 所以需要 给root 设一个密码 
+echo 'b' | passwd --stdin root
+
+mkdir cc  
+cd cc 
+touch Dockerfile
+vim Dockerfile
+
+FROM myos:test
+RUN yum -y install openssh-server initscripts
+RUN sshd-keygen
+RUN echo 'b' |passwd --stdin root
+ENV EnvironmentFile=/etc/sysconfig/sshd
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]
+
+
+
+======================================================
+
+
+============================
+安装私有仓库 (服务端)
+yum -y install docker-distribution
+启动 私有仓库,并启动开机自启动
+systemctl start docker-distribution
+systemctl enable docker-distribution
+
+仓库 配置文件 及数据 存储路径!!!
+
+/etc/docker-sidtribution/registry/config.yml
+/var/lib/registry
+
+访问 :  (验证)
+(http) curl  192.168.1.81:5000/v2/  必须得有 "/ "  斜杠  并且 / 后面的 不要写 
+{}[root@docker01 var]#
+
+
+客户端:
+vim /etc/sysconfig/docker
+20 ADD_REGISTRY='--add-registry docker01:5000'  (把默认的红帽的地址 改成我们自己的.)
+24 INSECURE_REGISTRY='--insecure-registry docker01:5000' (允许以非加密的形式访问仓库,默认的是 docker访问的时候 是 加密的)
+
+systemctl restart docker
+(如果卡住了 是因为有些容器没有 停 ! 等一小会 docker 会自己停掉!)
+
+然后把配置文件 传给 别的 docker 服务器主机 上
+再 restart docker
+===================================
+往刚建的 仓库里 传镜像 !!!
+
+先 打标签 
+docker tag docker.io/busybox:latest docker01:5000/busybox:latest
+docker images 可以看一下 刚打的标签  然后上传
+
+docker push docker01:5000/busybox:latest
+The push refers to a repository [docker01:5000/busybox]
+
+批量上传 镜像
+for i in latest python sshd httpd;do
+docker tag myos:${i} docker01:5000/myos:${i}
+docker push docker01:5000/myos:${i}
+done
+============================
+在docker02上 不用pull 下载 直接启动即可!!   在  启动的时候  它自动下载!!!
+刚才 把文件 scp 过来了 现在需要重启服务器
+systemctl start docker
+
+启动 docker 
+docker run -it docker01:5000/busybox:latest
+
+
+>>>>>>>>在docker02上  下载 docker01:5000仓库里的 镜像!!<<<<<<<<
+yum -y install docker
+
+cat /etc/sysconfig/docker
+
+ADD_REGISTRY='--add-registry docker01:5000'
+INSECURE_REGISTRY='--insecure-registry docker01:5000'
+systemctl restart docker
+
+直接 启动 不用先下载 在启动的 时候 就已经在下载了!!!
+
+docker run -it docker01:5000/busybox:latest
+docker run -it myos:latest	docker01:5000 可以省略不写!!!(如果只有一个仓库!!!)
+
+docker run -it docker01:5000/busybox:latest
+Unable to find image 'docker01:5000/busybox:latest' locally
+Trying to pull repository docker01:5000/busybox ... 
+latest: Pulling from docker01:5000/busybox
+8e674ad76dce: Pull complete 
+Digest: sha256:bf510723d2cd2d4e3f5ce7e93bf1e52c8fd76831995ac3bd3f90ecc866643aff
+Status: Downloaded newer image for docker01:5000/busybox:latest
+/ # 
+
+docker run -it myos:latest
+Unable to find image 'myos:latest' locally
+Trying to pull repository docker01:5000/myos ... 
+latest: Pulling from docker01:5000/myos
+8ba884070f61: Pull complete 
+26fde38c3fb3: Pull complete 
+0ff7b2eb237a: Pull complete 
+cf90fa448652: Pull complete 
+
+验证成功!!!!!!!!!!
+=============================
+
+注意 : 启动的顺序 是先 从本地找镜像 本地有 直接启动 本地没有 找远程镜像!!
+
+docker run -it docker01:5000/busybox:latest 这个是一个完整的 命令
+找的就是 远程镜像!!
+
+docker run -it myos:latest
+先找本地 本地没有 再找远程!!!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=============================
+
+远程仓库的 镜像在哪里 怎么看??
+cat /etc/docker-distribution/registry/config.yml
+version: 0.1
+log:
+  fields:
+    service: registry				服务的名称
+storage:
+    cache:
+        layerinfo: inmemory
+    filesystem:
+        root directory: /var/lib/registry  ===> 数据存储的路径 镜像的地址 !!!
+http:
+    addr: :5000					端口号!!
+
+ ls -R /var/lib//registry/docker
+很多 很多 16 进制数
+
+第二种方法:
+
+ (http) curl 192.168.1.81:5000/v2/_catlog   
+{}[root@docker01 var]#
+{"repositories":["busybox","myos","mysql"]}  ==仓库名字
+
+http 或者 curl  192.168.1.81:5000/v2/myos/tags/list   ===myos仓库下的 标签
+{"name":"myos","tags":["httpd","latest","python","sshd"]}
+
+
+================================================
+docker 的存储!!!!!   存哪了???????????
+
+存储卷!!!
+docker 轻量 弹性!!
+docker 容器 不 保持任何数据
+重要数据 请使用 外部卷存储 (数据持久化)
+容器可以 挂载 真实机目录 或 共享存储卷
+
+回顾 : 我们 做web 服务器集群的时候  
+一个负载均衡 下面有若干台web 服务器 但是 下面的 服务器 网页放哪里 ??
+
+==>最常用的解决方案 : 创建一个NFS 所有的机器 mount NFS 我们只需要更新 NFS的数据 即可!! 其他机子 mount 就好了
+docker 也得有 类似的技术!!!!  才能互联互通共享数据!!!
+docker 并不是一个真的 文件 系统 就是一个 在主机上的 隔离 !!所以docker 共享数据很容易的!!!
+
+实现: 
+
+docker run -v /data:/data -it docker.io/centos bash  有点像 mount
+(如果放的这个文件夹 在这个位置 不存在 则直接创建, 如果存在 则 覆盖掉!!! )
+
+docker run -itd -v /var/webroot:/var/www/html myos:httpd
+	运行	     v	真机上的目录 : 容器的目录  容器 
+9ae91ccf3ce33242f047993d5f81134cfa1f729177703a156b83c26c3d1a0c5e
+
+这样 我修改 真机上的目录 容器里的 就会 跟着 改变了!!!
+
+docker exec -it 9a
+
+cd /var/www/html 
+[root@9ae91ccf3ce3 html]
+echo "123456" > index.html
+
+[root@docker01 webroot]# cat index.html 
+123456
+
+docker01 上的 webroot/index.html 和
+容器里面的 /var/www/html/index.html 其实 就是一个 文件!!!!1
+
+这样我就可以 通过修改容器 外部的文件来 修改 容器内部的文件了!!!!
+
+
+共享存储:
+一台 共享存储 服务器 可以提供 给 所有 Docker 主机 使用 
+共享存储服务器 (NAS,SAN,DAS等)
+如:
+使用 NFS 创建 共享 存储服务器
+客户端 挂在 NFS 共享,并最终映射到 容器中!!!
+
+yum -y install nfs-utils
+mkdir /var/webroot
+
+vim /etc/exports
+/var/webroot *(rw)
+
+exportfs -avr
+exporting 172.25.254.0/24:/content
+exporting *:/var/webroot
+
+showmount -e
+Export list for room9pc01.tedu.cn:
+/var/webroot *
+/content     172.25.254.0/24
+
+
+
+===============================================
+docker 的网络 !!
+ docker network list
+NETWORK ID          NAME                DRIVER              SCOPE
+45602bc33653        bridge (桥接)        bridge              local
+6aa4a3657ee7        host (云主机)        host                local
+e4941762b262        none (无网络)        null                local
+
+1 桥接
+2 云主机
+3 无网络!
+因为做容器 ,需要在网络上通讯, 所以 后两种基本不用!!!
+基本都是 桥接!!!
+
+创建一个交换机  和 无数 的容器
+容器  直接连接  交换机!!!
+
+通过什么;命令 查看?
+1 ifconfig
+2  ip addr show
+
+加入 要让  容器 1 和 3 通, 2 和 4 通. 但是 1,3 和2,4 不能通.怎么办?
+(openstack) 里是做一个 vlan 叫 vxlan  ovx交换机 ovxbridge!
+但是 docker 容易 简单粗暴 ,直接 在做一个交换机 让 2 和4 通就行了!
+
+docker 里的网络最复杂 也就这样了 在复杂就是 k8s 里的网络里了!
+
+docker network list
+创建 命令: 创建docker1 交换机!
+docker network create --subnet=10.10.10.0/24 docker1 创建一个新的交换机  docker1 !!!     subnet 是创建子网的!!!!!!!!
+docker network  inspect docker1 查看 交换机的详细信息!1
+
+ifconfig
+br-51c1d462d2f1: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+docker run --network=bridge | host | none   指定 启动的容器 和谁;相连 默认的是 bridge
+br-51c1d462d2f1  其实就是 docker1
+
+docker network ls
+45602bc33653        bridge              
+51c1d462d2f1        docker1
+
+
+docker run -it myos:latest
+ifconfig
+172.17.0.2
+
+docker run -it myos:latest
+ifconfig
+172.17.0.3
+ping 172.17.0.2  可ping通
+
+
+docker run -it --network=docker1 myos:latest
+ifconfig
+10.10.10.2
+
+docker run -it --network=docker1 myos:latest
+ifconfig
+10.10.10.3
+ping 10.10.10.2  可 ping 通
+ping 172.17.0.2  ping 不 通
+
+企业中 网络 实际是由 k8s 来管的!!!
+
++++++++++++++++++++++++++++++++++++++++++++++
+       docker 和真机相连  向外提供服务!!!!! 
+-p 将宿主机 的端口和 容器的端口 绑定 在一起!!!!
+----------------------------------------------------------------------------------------------------------
+curl 192.168.1.81
+curl: (7) Failed connect to 192.168.1.81:80; 没有到主机的路由
+
+docker run -itd -p 80:80 myos:httpd (端口绑定!!! 真机 和 虚拟机 端口 绑定 !  访问容器 就是访问 真机!!!  将应用 转化成镜像 , 起一个 服务 就是 起一个 容器!  只需 3秒  企业中更多的是在 做docker 镜像!!!)
+
+curl 192.168.1.81
+welcome to appache
+
+
+
+
+
+
+
+
+
+
+
+
