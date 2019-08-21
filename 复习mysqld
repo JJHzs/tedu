@@ -1,0 +1,15 @@
+ss -ntulp |grep 3306 	看端口
+ps -C mysqld		看进程
+ls /var/lib/mysql		默认日志 (systemctl start mysqld 后 日志里会有 初始化的日志!)
+初始密码 :  在  /var/log/mysqld.log里
+grep password  /var/log/mysqld.log
+
+
+
+
+
+
+
+
+
+
