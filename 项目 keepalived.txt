@@ -1,0 +1,218 @@
+Keepalived 高可用! 专门为 lvs 而做的软件!
+装包 : yum -y install keepalived
+配置 :  vim /etc/keepalived/keepalived.conf
+
+global_defs {
+   notification_email {						  收件人
+     acassen@firewall.loc
+     failover@firewall.loc
+     sysadmin@firewall.loc
+     809869215@qq.com
+   }
+   notification_email_from Alexandre.Cassen@firewall.loc  发件人
+   smtp_server 192.168.200.1					  发邮件的服务器(postfix 服务器的地址)
+    router_id web2			把它当成路由器,	路由器的id 或者名字
+
+
+路由热备协议 VRRP :
+vrrp_instance VI_1 {
+    state MASTER		主服务器是master 备服务器是 BACKUP (初始状态)
+    interface eth0	把 浮动IP 配在这里 eth0:1
+    virtual_router_id 51  ????????????????????????????????????????  
+    priority 280		优先级: (主要决定谁是主 备服务器 越大越优先)
+    advert_int 1		隔多久 对比一下 优先级!!! 默认 1 秒!
+    authentication {	防止有人装个keepalived 优先级配成特别高形成网站劫持
+        auth_type PASS	所以配个 密码 只有密码相同的主机  才可以认!
+        auth_pass 1111		主备 密码必须得 一致!!!!!!
+    }
+    virtual_ipaddress {
+        192.168.1.250		设置虚拟 浮动ip
+    }
+}
+
+备 服务器 需要改的
+vrrp_instance VI_1 {
+    state BACKUP
+ 
+   priority 100
+
+    virtual_ipaddress {
+        192.168.1.250
+
+systemctl restart keepalived.service (启动的时候 会 启动防火墙 并拒绝所有连接)
+systemctl enable keepalived.service 	(并且用的是 用 iptables drop )
+查询 ip:  软件自己会 通过 打 命令(ip addr) 自动生效 只管查一下就好了
+ip addr show:
+ip a s (缩写):
+ eth0: inet 192.168.1.1/24 	真实 IP
+	 inet 192.168.1.250/32	浮动 IP
+
+要把他设 得防火墙 清空
+iptables -F 
+
+1, 主服务器上 停掉 web服务器  /usr/local/nginx/sbin/nginx -s stop 浮动IP 不会跑到另一台机子上 
+2, down掉网卡  ifdown eth0  浮动ip 会 漂 到另一台机子上
+3, 主服务器 关机		  浮动ip 会 漂 到另一台机子上
+
+==========================================
+keepalived  双主模式:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+nginx 
+调度:
+  http {
+.........
+upstream webserver{
+      server 192.168.1.3:80;
+       server 192.168.1.4:80;
+       server 192.168.1.5:80;
+       server 192.168.1.6:80;
+       server 192.168.1.7:80;
+       server 192.168.1.8:80;
+       server 192.168.1.9:80;
+}
+
+server {
+	location / {
+
+	proxy_pass http://webserver;
+
+====================================================
+
+nginx 动静分离
+
+  server {
+       isten       80;
+       server_name  localhost;
+
+ 	 location / {
+    	        root   html;
+      	      index  index.php index.html index.htm;
+      	  }
+
+location ~ \.php$ {
+            root           html;
+            fastcgi_pass   127.0.0.1:9000;
+            fastcgi_index  index.php;
+        #   fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+            include        fastcgi.conf;
+        }
+========================================
+php 动态页面
+ cat /usr/local/nginx/html/test1.php 
+<?php
+$i="This is a test Page";
+echo $i;
+?>
+
+cat /usr/local/nginx/html/test2.php 
+<?php
+$mysqli = new mysqli('localhost','root','密码','mysql');
+if (mysqli_connect_errno()){
+    die('Unable to connect!'). mysqli_connect_error();
+}
+$sql = "select * from user";
+$result = $mysqli->query($sql);
+while($row = $result->fetch_array()){
+    printf("Host:%s",$row[0]);
+    printf("</br>");
+    printf("Name:%s",$row[1]);
+    printf("</br>");
+}
+?>
+
+验证 : curl 192.168.1.4/test1.php
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+tomcat
+
+yum -y install  java-1.8.0-openjdk
+java-version
+
+tar -xvf apache-tomcat-8.0.30.tar.gz
+mv apache-tomcat-8.0.30 /usr/local/tomcat
+
+/usr/local/tomcat/bin/startup.sh
+mv /dev/random /dev/random.bak
+ln -s /de/urandom /dev/random
+
+curl 192.168.1.5:8080
+======================================
+java动态页面
+
+cat /usr/local/tomcat/webapps/ROOT/test.jsp 
+<html>
+<body>
+<center>
+Now time is: <%=new java.util.Date()%>       
+</center>
+</body>
+</html>
+
+改 配置
+
+123       <Host name="www.a.com"  appBase="a"
+124             unpackWARs="true" autoDeploy="true">
+125       </Host>
+126 
+127       <Host name="www.b.com"  appBase="b"
+128             unpackWARs="true" autoDeploy="true">
+129       </Host>
+130 
+131       <Host name="localhost"  appBase="webapps"
+132             unpackWARs="true" autoDeploy="true">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

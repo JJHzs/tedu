@@ -1,0 +1,164 @@
+>>>>>>>>>>>>>>>Redis<<<<<<<<<<<<<<<
+
+是一款高性能的 (Key/Values) 分布式 内存数据库!  (数据存储在不同地点的不同服务器上)
+可以 定期的把 内存里的数据 保存到 硬盘当中!!!! 从而实现 数据持久化!!!
+支持多种数据类型  list(列表) hash(哈希) set(结合) zset(有序结合)
+还支持 主从同步  的数据备份模式   (mysql里的!!)
+redis 中文网站 : www.redis.cn
+
+======================================
+装包  改配置
+启动一个 虚拟机 ip 配成 192.168.4.50
+配好 yum 源
+从真机上 把 redis 的包传过去!!
+scp -r /root/桌面/软件包/redis root@192.168.4.50:/root
+
+tar -xvf redis-4.0.8.tar.gz
+cd redis-4.0.8/
+rpm -q gcc
+yum -y install gcc
+
+因为 ls 看到 里面已经有 makefile 所以直接 编译即可!!!!
+make && make install
+编译      安装 命令 配置文件 和程序!!
+
+初始化配置 用脚本    源码目录下/utils/install/.sh  ==>cd /utils ./install_server.sh				是一个 shell 脚本!
+port 			6379
+配置文件		/etc/redis/6379.conf
+日志			/var/log/redis_6379.log
+数据库目录		/var/lib/redis/6379
+启动服务调用的程序	/usr/local/bin/redis-server
+命令行的连接命令	/usr/local/bin/redis-cli
+按 ENTER 就是 选择上面的 配置  Ctrl+c 就是终止 !!
+ss -ntulp |grep 6379
+
+++++++++++++++++++++
+yum -y install gcc
+tar -xvf redis-4.0.8.tar.gz
+cd redis-4.0.8/
+make && make install
+cd utils
+./install_server.sh  ==>一路回车	
+ss -ntulp |grep 6379
+++++++++++++++++++++
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
